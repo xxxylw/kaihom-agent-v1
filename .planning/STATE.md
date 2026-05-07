@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-05-07
 **Current Phase:** Phase 1 - FastAPI Foundation
-**Current Status:** Project initialized; ready for `$gsd-plan-phase 1`.
+**Current Status:** Phase 1 planned; ready for `$gsd-execute-phase 1`.
 
 ## Project Reference
 
@@ -12,7 +12,7 @@ See: `.planning/PROJECT.md`
 
 ## Current Focus
 
-Initialize the backend foundation for a Python FastAPI Mock version. The first implementation phase should create a clean project skeleton, development dependencies, `/health`, OpenAPI docs, tests, and local configuration.
+Execute the backend foundation for a Python FastAPI Mock version. Phase 1 creates a clean project skeleton, development dependencies, `/health`, OpenAPI docs, tests, and local configuration.
 
 ## Important Context
 
@@ -28,7 +28,7 @@ Initialize the backend foundation for a Python FastAPI Mock version. The first i
 Run:
 
 ```text
-$gsd-plan-phase 1
+$gsd-execute-phase 1
 ```
 
 ## Recent Decisions
@@ -39,6 +39,7 @@ $gsd-plan-phase 1
 | 2026-05-07 | Mock Kaihong APIs first | No real Kaihong Wing access yet. |
 | 2026-05-07 | Save drafts only | Avoid unsafe formal order automation. |
 | 2026-05-07 | Mobile H5 first | Fastest route to phone-accessible demo. |
+| 2026-05-07 | Phase 1 planned as one focused execution plan | Foundation work is small enough for one autonomous plan. |
 
 ## Open Questions
 
