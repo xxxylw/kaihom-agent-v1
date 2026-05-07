@@ -1,8 +1,8 @@
 ﻿# State: Kaihom Agent v1
 
 **Last Updated:** 2026-05-07
-**Current Phase:** Phase 2 - Mock Kaihong Business API
-**Current Status:** Phase 2 planned; ready for `$gsd-execute-phase 2`.
+**Current Phase:** Phase 3 - File Upload and Local Storage
+**Current Status:** Phase 2 execution artifacts are in place; ready to plan Phase 3.
 
 ## Project Reference
 
@@ -12,7 +12,7 @@ See: `.planning/PROJECT.md`
 
 ## Current Focus
 
-Execute the Mock Kaihong business API boundary. Phase 2 should simulate login/current-user, customers, dictionaries, recent orders, and local draft persistence without touching the real Kaihong Wing system.
+Plan file upload and local storage. Phase 3 should accept logistics document images, validate type/size, store files locally, record metadata, and prepare source document references for Agent tasks.
 
 ## Important Context
 
@@ -28,7 +28,7 @@ Execute the Mock Kaihong business API boundary. Phase 2 should simulate login/cu
 Run:
 
 ```text
-$gsd-execute-phase 2
+$gsd-plan-phase 3
 ```
 
 ## Recent Decisions
@@ -43,6 +43,7 @@ $gsd-execute-phase 2
 | 2026-05-07 | Phase 1 established a FastAPI app factory, cached settings, `/health`, OpenAPI coverage, tests, and README commands | Provides the backend foundation for Mock Kaihong API work. |
 | 2026-05-07 | Phase 2 planned Mock Kaihong endpoints under `/mock/kaihong` with local SQLite draft persistence | Gives later Agent phases a realistic business API boundary without real Kaihong access. |
 | 2026-05-07 | Phase 2 plan revised to make multi-document and multi-order draft contracts explicit | Logistics orders may come from multiple documents and may produce multiple order items. |
+| 2026-05-07 | Phase 2 implemented Mock Kaihong auth, customers, dictionaries, recent orders, and draft persistence | Later phases can save multi-document, multi-order drafts through local mock APIs. |
 
 ## Open Questions
 

@@ -14,11 +14,11 @@
 
 ### Mock Kaihong API
 
-- [ ] **MOCK-01**: System provides mock login and current-user endpoints.
-- [ ] **MOCK-02**: System provides mock customer list and customer detail endpoints.
-- [ ] **MOCK-03**: System provides mock dictionaries for ports, warehouses, yards, and fee types.
-- [ ] **MOCK-04**: System provides mock recent-order lookup by customer.
-- [ ] **MOCK-05**: System can save and retrieve local order drafts through Mock Kaihong endpoints.
+- [x] **MOCK-01**: System provides mock login and current-user endpoints.
+- [x] **MOCK-02**: System provides mock customer list and customer detail endpoints.
+- [x] **MOCK-03**: System provides mock dictionaries for ports, warehouses, yards, and fee types.
+- [x] **MOCK-04**: System provides mock recent-order lookup by customer.
+- [x] **MOCK-05**: System can save and retrieve local order drafts through Mock Kaihong endpoints.
 
 ### Upload and Storage
 
@@ -110,11 +110,11 @@
 | FOUND-02 | Phase 1 | Complete |
 | FOUND-03 | Phase 1 | Complete |
 | FOUND-04 | Phase 1 | Complete |
-| MOCK-01 | Phase 2 | Pending |
-| MOCK-02 | Phase 2 | Pending |
-| MOCK-03 | Phase 2 | Pending |
-| MOCK-04 | Phase 2 | Pending |
-| MOCK-05 | Phase 2 | Pending |
+| MOCK-01 | Phase 2 | Complete |
+| MOCK-02 | Phase 2 | Complete |
+| MOCK-03 | Phase 2 | Complete |
+| MOCK-04 | Phase 2 | Complete |
+| MOCK-05 | Phase 2 | Complete |
 | FILE-01 | Phase 3 | Pending |
 | FILE-02 | Phase 3 | Pending |
 | FILE-03 | Phase 3 | Pending |
