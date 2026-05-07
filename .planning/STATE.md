@@ -1,0 +1,51 @@
+﻿# State: Kaihom Agent v1
+
+**Last Updated:** 2026-05-07
+**Current Phase:** Phase 1 - FastAPI Foundation
+**Current Status:** Project initialized; ready for `$gsd-plan-phase 1`.
+
+## Project Reference
+
+See: `.planning/PROJECT.md`
+
+**Core value:** A business user can upload logistics documents from a phone, let the Agent pre-fill an order draft, answer only missing/uncertain fields, and save a reviewable draft.
+
+## Current Focus
+
+Initialize the backend foundation for a Python FastAPI Mock version. The first implementation phase should create a clean project skeleton, development dependencies, `/health`, OpenAPI docs, tests, and local configuration.
+
+## Important Context
+
+- The real Kaihong Wing system is unavailable.
+- Do not build real Java/Spring integration yet.
+- Do not connect to any real company database.
+- The first value loop is Mock-only: upload -> mock extraction -> clarification -> draft save.
+- Planning docs are committed to git per user choice.
+- GSD mode: YOLO, standard granularity, parallel execution, research/plan_check/verifier enabled.
+
+## Next Action
+
+Run:
+
+```text
+$gsd-plan-phase 1
+```
+
+## Recent Decisions
+
+| Date | Decision | Reason |
+|------|----------|--------|
+| 2026-05-07 | Use Python FastAPI for v1 | Best fit for Mock Agent/OCR workflow and fast iteration. |
+| 2026-05-07 | Mock Kaihong APIs first | No real Kaihong Wing access yet. |
+| 2026-05-07 | Save drafts only | Avoid unsafe formal order automation. |
+| 2026-05-07 | Mobile H5 first | Fastest route to phone-accessible demo. |
+
+## Open Questions
+
+- What exact fields will Kaihong Wing require when real API docs become available?
+- Which OCR/LLM provider will be acceptable for business documents?
+- Will the final internal frontend be H5, Enterprise WeChat, or WeChat Mini Program?
+- What data can legally/commercially leave the company network?
+
+---
+*State initialized: 2026-05-07*
