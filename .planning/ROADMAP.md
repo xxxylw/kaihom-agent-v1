@@ -17,10 +17,11 @@
 
 ## Phase 2: Mock Kaihong Business API
 
-**Status:** pending
+**Status:** planned
 **Goal:** Simulate the Kaihong Wing business data boundary.
 **Requirements:** MOCK-01, MOCK-02, MOCK-03, MOCK-04, MOCK-05
 **Dependencies:** Phase 1
+**Plan:** `.planning/phases/02-mock-kaihong-business-api/02-01-PLAN.md`
 **Success Criteria:**
 - Mock login/current user works.
 - Customers, dictionaries, recent orders, and drafts are available through documented endpoints.

@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-05-07
 **Current Phase:** Phase 2 - Mock Kaihong Business API
-**Current Status:** Phase 1 execution artifacts are in place; ready to plan Phase 2.
+**Current Status:** Phase 2 planned; ready for `$gsd-execute-phase 2`.
 
 ## Project Reference
 
@@ -12,7 +12,7 @@ See: `.planning/PROJECT.md`
 
 ## Current Focus
 
-Plan the Mock Kaihong business API boundary. Phase 2 should simulate login/current-user, customers, dictionaries, recent orders, and local draft persistence without touching the real Kaihong Wing system.
+Execute the Mock Kaihong business API boundary. Phase 2 should simulate login/current-user, customers, dictionaries, recent orders, and local draft persistence without touching the real Kaihong Wing system.
 
 ## Important Context
 
@@ -28,7 +28,7 @@ Plan the Mock Kaihong business API boundary. Phase 2 should simulate login/curre
 Run:
 
 ```text
-$gsd-plan-phase 2
+$gsd-execute-phase 2
 ```
 
 ## Recent Decisions
@@ -41,6 +41,7 @@ $gsd-plan-phase 2
 | 2026-05-07 | Mobile H5 first | Fastest route to phone-accessible demo. |
 | 2026-05-07 | Phase 1 planned as one focused execution plan | Foundation work is small enough for one autonomous plan. |
 | 2026-05-07 | Phase 1 established a FastAPI app factory, cached settings, `/health`, OpenAPI coverage, tests, and README commands | Provides the backend foundation for Mock Kaihong API work. |
+| 2026-05-07 | Phase 2 planned Mock Kaihong endpoints under `/mock/kaihong` with local SQLite draft persistence | Gives later Agent phases a realistic business API boundary without real Kaihong access. |
 
 ## Open Questions
 
