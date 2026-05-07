@@ -37,10 +37,14 @@ Use static seed data for users, customers, dictionaries, and recent orders. Use 
 The first draft schema should stay intentionally flexible:
 
 - Required business identifiers: `customer_id`, `created_by`.
-- Draft payload: JSON-compatible dictionary of draft fields.
+- Source document references: a list of document descriptors that later upload/OCR phases can fill.
+- Order items: a list of one or more draft order items, because one upload batch may produce multiple orders or multiple transport legs.
+- Draft payload: JSON-compatible dictionary of shared or legacy draft fields.
 - Metadata: `source`, timestamps, and status.
 
 This avoids pretending to know the real Kaihong Wing order field list before the company provides API documentation.
+
+See `docs/物流订单字段与多单据识别说明.md` for the business field reference behind the multi-document and multi-order structure.
 
 ## Implementation Decisions
 
@@ -51,10 +55,12 @@ This avoids pretending to know the real Kaihong Wing order field list before the
 | Store drafts in local SQLite | Satisfies local draft persistence and prepares for future SQLModel usage. |
 | Keep dictionaries grouped in one endpoint | Mobile/Agent flows can fetch all lookup data cheaply during v1. |
 | Return Pydantic response models | Keeps OpenAPI contracts explicit for future Java/Kaihong discussion. |
+| Include document types and transport modes in mock dictionaries | Prepares later upload/OCR phases to classify multiple logistics documents without adding real recognition in Phase 2. |
 
 ## Risks
 
 - Real Kaihong Wing fields are unknown, so the draft payload must stay flexible.
+- Multiple uploaded documents may map to multiple draft orders; Phase 2 stores this structure but does not perform recognition.
 - Mock token auth must not be mistaken for production security.
 - SQLite database files should stay local and ignored by git.
 - Phase 2 should not add upload, OCR, Agent task, clarification, or mobile UI behavior.

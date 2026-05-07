@@ -42,6 +42,7 @@ $gsd-execute-phase 2
 | 2026-05-07 | Phase 1 planned as one focused execution plan | Foundation work is small enough for one autonomous plan. |
 | 2026-05-07 | Phase 1 established a FastAPI app factory, cached settings, `/health`, OpenAPI coverage, tests, and README commands | Provides the backend foundation for Mock Kaihong API work. |
 | 2026-05-07 | Phase 2 planned Mock Kaihong endpoints under `/mock/kaihong` with local SQLite draft persistence | Gives later Agent phases a realistic business API boundary without real Kaihong access. |
+| 2026-05-07 | Phase 2 plan revised to make multi-document and multi-order draft contracts explicit | Logistics orders may come from multiple documents and may produce multiple order items. |
 
 ## Open Questions
 

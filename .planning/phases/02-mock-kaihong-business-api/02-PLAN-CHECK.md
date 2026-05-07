@@ -22,7 +22,7 @@ PASS
 
 Phase goal: simulate the Kaihong Wing business data boundary.
 
-The plan creates a Mock Kaihong router, explicit Pydantic contracts, deterministic business data, token-style mock auth, local draft persistence, and tests. This is enough for later phases to call realistic business endpoints without real Kaihong Wing access.
+The plan creates a Mock Kaihong router, explicit Pydantic contracts, deterministic business data, token-style mock auth, local draft persistence, and tests. It now also makes multi-document and multi-order draft data explicit through `source_documents` and `order_items`, while leaving actual recognition to later phases. This is enough for later phases to call realistic business endpoints without real Kaihong Wing access.
 
 ## Scope Boundary Check
 
@@ -35,6 +35,7 @@ The plan explicitly excludes:
 - Agent task state machine.
 - Clarification/finalization workflow.
 - Mobile UI.
+- Actual document recognition or field extraction.
 
 This keeps Phase 2 inside the roadmap boundary.
 
@@ -45,6 +46,7 @@ The plan names exact files to create or modify, route paths, schema names, servi
 ## Risk Notes
 
 - Draft schema intentionally stores flexible payload JSON because real Kaihong order fields are unknown.
+- Multi-document and multi-order support in Phase 2 is contract/storage support only; Phase 3 and Phase 5 still own upload and recognition.
 - Mock bearer token is only a prototype affordance; production auth is deferred.
 - SQLite files must remain ignored by git, handled in Task 1.
 
