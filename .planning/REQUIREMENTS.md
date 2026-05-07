@@ -7,10 +7,10 @@
 
 ### Foundation
 
-- [ ] **FOUND-01**: Repository contains a runnable Python FastAPI application structure.
-- [ ] **FOUND-02**: Application exposes `/health` and OpenAPI documentation.
-- [ ] **FOUND-03**: Configuration supports local development without secrets committed to git.
-- [ ] **FOUND-04**: Tests can run locally with a single documented command.
+- [x] **FOUND-01**: Repository contains a runnable Python FastAPI application structure.
+- [x] **FOUND-02**: Application exposes `/health` and OpenAPI documentation.
+- [x] **FOUND-03**: Configuration supports local development without secrets committed to git.
+- [x] **FOUND-04**: Tests can run locally with a single documented command.
 
 ### Mock Kaihong API
 
@@ -106,10 +106,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| FOUND-01 | Phase 1 | Pending |
-| FOUND-02 | Phase 1 | Pending |
-| FOUND-03 | Phase 1 | Pending |
-| FOUND-04 | Phase 1 | Pending |
+| FOUND-01 | Phase 1 | Complete |
+| FOUND-02 | Phase 1 | Complete |
+| FOUND-03 | Phase 1 | Complete |
+| FOUND-04 | Phase 1 | Complete |
 | MOCK-01 | Phase 2 | Pending |
 | MOCK-02 | Phase 2 | Pending |
 | MOCK-03 | Phase 2 | Pending |

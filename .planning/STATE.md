@@ -1,8 +1,8 @@
 ﻿# State: Kaihom Agent v1
 
 **Last Updated:** 2026-05-07
-**Current Phase:** Phase 1 - FastAPI Foundation
-**Current Status:** Phase 1 planned; ready for `$gsd-execute-phase 1`.
+**Current Phase:** Phase 2 - Mock Kaihong Business API
+**Current Status:** Phase 1 execution artifacts are in place; ready to plan Phase 2.
 
 ## Project Reference
 
@@ -12,7 +12,7 @@ See: `.planning/PROJECT.md`
 
 ## Current Focus
 
-Execute the backend foundation for a Python FastAPI Mock version. Phase 1 creates a clean project skeleton, development dependencies, `/health`, OpenAPI docs, tests, and local configuration.
+Plan the Mock Kaihong business API boundary. Phase 2 should simulate login/current-user, customers, dictionaries, recent orders, and local draft persistence without touching the real Kaihong Wing system.
 
 ## Important Context
 
@@ -28,7 +28,7 @@ Execute the backend foundation for a Python FastAPI Mock version. Phase 1 create
 Run:
 
 ```text
-$gsd-execute-phase 1
+$gsd-plan-phase 2
 ```
 
 ## Recent Decisions
@@ -40,6 +40,7 @@ $gsd-execute-phase 1
 | 2026-05-07 | Save drafts only | Avoid unsafe formal order automation. |
 | 2026-05-07 | Mobile H5 first | Fastest route to phone-accessible demo. |
 | 2026-05-07 | Phase 1 planned as one focused execution plan | Foundation work is small enough for one autonomous plan. |
+| 2026-05-07 | Phase 1 established a FastAPI app factory, cached settings, `/health`, OpenAPI coverage, tests, and README commands | Provides the backend foundation for Mock Kaihong API work. |
 
 ## Open Questions
 
