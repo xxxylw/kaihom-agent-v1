@@ -29,7 +29,7 @@
 
 ## Phase 3: File Upload and Local Storage
 
-**Status:** pending
+**Status:** complete
 **Goal:** Accept logistics document images from mobile/H5 and persist file metadata.
 **Requirements:** FILE-01, FILE-02, FILE-03, FILE-04, FILE-05
 **Dependencies:** Phase 1

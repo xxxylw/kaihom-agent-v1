@@ -22,11 +22,11 @@
 
 ### Upload and Storage
 
-- [ ] **FILE-01**: User can upload one logistics document image through a multipart endpoint.
-- [ ] **FILE-02**: User can upload multiple logistics document images for one task.
-- [ ] **FILE-03**: System validates file type and size before saving.
-- [ ] **FILE-04**: System stores uploaded files locally and records file metadata.
-- [ ] **FILE-05**: Uploaded files can be associated with an Agent task.
+- [x] **FILE-01**: User can upload one logistics document image through a multipart endpoint.
+- [x] **FILE-02**: User can upload multiple logistics document images for one task.
+- [x] **FILE-03**: System validates file type and size before saving.
+- [x] **FILE-04**: System stores uploaded files locally and records file metadata.
+- [x] **FILE-05**: Uploaded files can be associated with an Agent task.
 
 ### Agent Task Workflow
 
@@ -115,11 +115,11 @@
 | MOCK-03 | Phase 2 | Complete |
 | MOCK-04 | Phase 2 | Complete |
 | MOCK-05 | Phase 2 | Complete |
-| FILE-01 | Phase 3 | Pending |
-| FILE-02 | Phase 3 | Pending |
-| FILE-03 | Phase 3 | Pending |
-| FILE-04 | Phase 3 | Pending |
-| FILE-05 | Phase 3 | Pending |
+| FILE-01 | Phase 3 | Complete |
+| FILE-02 | Phase 3 | Complete |
+| FILE-03 | Phase 3 | Complete |
+| FILE-04 | Phase 3 | Complete |
+| FILE-05 | Phase 3 | Complete |
 | TASK-01 | Phase 4 | Pending |
 | TASK-02 | Phase 4 | Pending |
 | TASK-03 | Phase 4 | Pending |
