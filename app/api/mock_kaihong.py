@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlmodel import Session
 
 from app.db.session import get_session
@@ -16,17 +17,19 @@ from app.services import mock_kaihong
 
 
 router = APIRouter(prefix="/mock/kaihong", tags=["Mock Kaihong"])
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
-def get_current_user(authorization: str | None = Header(default=None)) -> MockUserResponse:
-    if not authorization or not authorization.startswith("Bearer "):
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+) -> MockUserResponse:
+    if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Missing bearer token",
         )
 
-    token = authorization.removeprefix("Bearer ").strip()
-    user = mock_kaihong.get_user_by_token(token)
+    user = mock_kaihong.get_user_by_token(credentials.credentials)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -181,6 +181,9 @@ def test_openapi_documents_mock_kaihong_contracts():
     response = client.get("/openapi.json")
 
     assert response.status_code == 200
-    paths = response.json()["paths"]
+    schema = response.json()
+    paths = schema["paths"]
     assert "/mock/kaihong/auth/login" in paths
     assert "/mock/kaihong/drafts" in paths
+    assert "HTTPBearer" in schema["components"]["securitySchemes"]
+    assert paths["/mock/kaihong/users/me"]["get"]["security"] == [{"HTTPBearer": []}]
