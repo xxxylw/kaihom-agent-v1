@@ -4,6 +4,7 @@ from sqlmodel import Session, SQLModel, create_engine
 
 from app.core.config import get_settings
 from app.models import draft as _draft
+from app.models import uploaded_file as _uploaded_file
 
 
 engine = create_engine(
