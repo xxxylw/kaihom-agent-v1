@@ -41,10 +41,12 @@
 
 ## Phase 4: Agent Task State Machine
 
-**Status:** pending
+**Status:** completed
 **Goal:** Represent the order-draft Agent workflow as explicit task states and events.
 **Requirements:** TASK-01, TASK-02, TASK-03, TASK-04
 **Dependencies:** Phase 2, Phase 3
+**Framework Decision:** Keep Phase 4 deterministic and framework-light. Do not introduce LangChain or LangGraph as a runtime dependency here; define clear task/workflow service boundaries so later phases can evaluate them.
+**Plan:** `.planning/phases/04-agent-task-state-machine/04-01-PLAN.md`
 **Success Criteria:**
 - Task creation endpoint accepts user context and file references.
 - Task status can be queried.
@@ -57,6 +59,7 @@
 **Goal:** Convert deterministic mock OCR text into structured logistics order draft fields.
 **Requirements:** EXTR-01, EXTR-02, EXTR-03, EXTR-04, EXTR-05
 **Dependencies:** Phase 4
+**Discussion Required:** During Phase 5 planning, discuss whether extraction should remain deterministic Python/Pydantic logic or whether LangChain/LangGraph-style structure should be introduced for future real OCR/LLM extraction.
 **Success Criteria:**
 - Core order draft schema exists.
 - Mock OCR text fixtures drive extraction.
@@ -69,6 +72,7 @@
 **Goal:** Let the Agent ask for missing fields, merge answers, and save final drafts.
 **Requirements:** CLAR-01, CLAR-02, CLAR-03, CLAR-04, DRAFT-01, DRAFT-02, DRAFT-03, DRAFT-04
 **Dependencies:** Phase 5
+**Discussion Required:** During Phase 6 planning, explicitly evaluate LangGraph for multi-step clarification, human-in-the-loop state transitions, and future LLM/tool orchestration. LangChain should be considered only if the phase needs prompt chains, tool calling, or retrieval-style composition.
 **Success Criteria:**
 - Missing fields produce clear questions.
 - User answers update the draft.
@@ -92,6 +96,7 @@
 **Status:** future
 **Goal:** Replace mock recognition and mock business APIs with real OCR/LLM and Kaihong Wing integration.
 **Candidate Requirements:** OCR-01, OCR-02, OCR-03, INTG-01, INTG-02, INTG-03, INTG-04, WX-01, WX-02, PROD-01, PROD-02, PROD-03, PROD-04
+**Framework Evaluation:** Revisit LangChain/LangGraph when real OCR/LLM provider selection, tool orchestration, confidence scoring, or production workflow checkpointing becomes concrete.
 
 ---
-*Last updated: 2026-05-07 after initialization*
+*Last updated: 2026-05-09 after Phase 4 execution*

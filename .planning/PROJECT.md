@@ -14,14 +14,13 @@ A business user can upload logistics documents from a phone, let the Agent pre-f
 
 ### Validated
 
-(None yet - ship to validate)
+- [x] Build a Python FastAPI backend that exposes Agent APIs and Mock Kaihong APIs. Validated through Phase 4: Agent Task State Machine.
+- [x] Support mobile-friendly document image upload and local file metadata tracking. Validated through Phase 3: File Upload and Local Storage.
+- [x] Maintain an Agent task lifecycle from upload through extraction, clarification, review, and finalization. Phase 4 validates the task/status/event ledger; later phases fill extraction, clarification, and finalization behavior.
 
 ### Active
 
-- [ ] Build a Python FastAPI backend that exposes Agent APIs and Mock Kaihong APIs.
 - [ ] Provide a mock business data layer for users, customers, dictionaries, historical orders, and order drafts.
-- [ ] Support mobile-friendly document image upload and local file metadata tracking.
-- [ ] Maintain an Agent task lifecycle from upload through extraction, clarification, review, and finalization.
 - [ ] Use a draft field schema that can later map to Kaihong Wing order fields.
 - [ ] Support missing-field and low-confidence clarification questions.
 - [ ] Save confirmed order drafts locally for inspection and future integration.
@@ -60,7 +59,7 @@ The target product loop is:
 - **Data safety**: Treat document photos, OCR text, prompts, drafts, and logs as sensitive business data.
 - **Storage**: Start with local filesystem and SQLite/SQLModel; keep boundaries clean so PostgreSQL and object storage can replace them later.
 - **Frontend**: Start with mobile H5 instead of native app; keep WeChat Mini Program as a later adapter.
-- **Agent design**: Prefer a deterministic task state machine and Pydantic schemas before complex Agent frameworks.
+- **Agent design**: Prefer a deterministic task state machine and Pydantic schemas before complex Agent frameworks. Keep Phase 4 framework-light, but explicitly revisit LangChain/LangGraph during Phase 5 or Phase 6 planning when extraction, clarification loops, human-in-the-loop behavior, or tool orchestration become concrete.
 
 ## Key Decisions
 
@@ -71,6 +70,7 @@ The target product loop is:
 | Save drafts, not formal orders | Reduces business risk and supports human review | Pending |
 | Use Pydantic/SQLModel contracts | Keeps request, response, and draft schemas explicit and future-mappable | Pending |
 | Start with mobile H5 | Fastest way to test phone upload without app-store or mini-program overhead | Pending |
+| Defer LangChain/LangGraph dependency decision | Phase 4 needs deterministic task state first; Phase 5/6 should discuss framework value when extraction and clarification behavior are planned | Pending |
 
 ## Evolution
 
@@ -90,4 +90,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-05-07 after initialization*
+*Last updated: 2026-05-09 after Phase 4 execution*

@@ -30,10 +30,10 @@
 
 ### Agent Task Workflow
 
-- [ ] **TASK-01**: System can create an order-draft Agent task from uploaded file references and user context.
-- [ ] **TASK-02**: System tracks task status through created, extracting, need_more_info, ready_for_review, finalized, and failed.
-- [ ] **TASK-03**: System can return current task state, extracted fields, questions, and draft preview.
-- [ ] **TASK-04**: System records task events for audit/debugging.
+- [x] **TASK-01**: System can create an order-draft Agent task from uploaded file references and user context.
+- [x] **TASK-02**: System tracks task status through created, extracting, need_more_info, ready_for_review, finalized, and failed.
+- [x] **TASK-03**: System can return current task state, extracted fields, questions, and draft preview.
+- [x] **TASK-04**: System records task events for audit/debugging.
 
 ### Extraction and Draft Schema
 
@@ -120,10 +120,10 @@
 | FILE-03 | Phase 3 | Complete |
 | FILE-04 | Phase 3 | Complete |
 | FILE-05 | Phase 3 | Complete |
-| TASK-01 | Phase 4 | Pending |
-| TASK-02 | Phase 4 | Pending |
-| TASK-03 | Phase 4 | Pending |
-| TASK-04 | Phase 4 | Pending |
+| TASK-01 | Phase 4 | Complete |
+| TASK-02 | Phase 4 | Complete |
+| TASK-03 | Phase 4 | Complete |
+| TASK-04 | Phase 4 | Complete |
 | EXTR-01 | Phase 5 | Pending |
 | EXTR-02 | Phase 5 | Pending |
 | EXTR-03 | Phase 5 | Pending |
@@ -150,4 +150,4 @@
 
 ---
 *Requirements defined: 2026-05-07*
-*Last updated: 2026-05-07 after initialization*
+*Last updated: 2026-05-09 after Phase 4 execution*

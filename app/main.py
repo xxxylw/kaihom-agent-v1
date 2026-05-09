@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from app.api.agent_tasks import router as agent_tasks_router
 from app.api.health import router as health_router
 from app.api.mock_kaihong import router as mock_kaihong_router
 from app.api.uploads import router as uploads_router
@@ -18,6 +19,7 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(mock_kaihong_router)
     app.include_router(uploads_router)
+    app.include_router(agent_tasks_router)
     return app
 
 
