@@ -1,9 +1,10 @@
+from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 import hashlib
 
 from fastapi import UploadFile, status
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.core.config import Settings, get_settings
 from app.models.uploaded_file import UploadedFileRecord, utc_now
@@ -28,6 +29,12 @@ class UploadValidationError(ValueError):
         super().__init__(message)
         self.message = message
         self.status_code = status_code
+
+
+@dataclass(frozen=True)
+class CleanupUploadsResult:
+    records_deleted: int
+    files_deleted: int
 
 
 def validate_upload_batch(files: list[UploadFile], settings: Settings) -> None:
@@ -140,6 +147,35 @@ def link_file_to_task(
     return _record_to_response(record)
 
 
+def cleanup_uploaded_files(
+    session: Session,
+    upload_dir: str | Path | None = None,
+) -> CleanupUploadsResult:
+    upload_root = Path(upload_dir or get_settings().upload_dir).resolve()
+    upload_root.mkdir(parents=True, exist_ok=True)
+
+    records = list(session.exec(select(UploadedFileRecord)).all())
+    deleted_paths: set[Path] = set()
+
+    for record in records:
+        stored_path = (upload_root / record.stored_filename).resolve()
+        if _is_inside_directory(stored_path, upload_root) and stored_path.exists():
+            stored_path.unlink()
+            deleted_paths.add(stored_path)
+        session.delete(record)
+
+    for path in upload_root.iterdir():
+        if path.is_file():
+            path.unlink()
+            deleted_paths.add(path.resolve())
+
+    session.commit()
+    return CleanupUploadsResult(
+        records_deleted=len(records),
+        files_deleted=len(deleted_paths),
+    )
+
+
 def _record_to_response(record: UploadedFileRecord) -> UploadedFileResponse:
     return UploadedFileResponse(
         file_id=record.id,
@@ -175,3 +211,11 @@ def _read_content(upload: UploadFile) -> bytes:
 
 def _relative_storage_path(upload_root: Path, stored_filename: str) -> str:
     return str(Path(upload_root.name) / stored_filename).replace("\\", "/")
+
+
+def _is_inside_directory(path: Path, directory: Path) -> bool:
+    try:
+        path.relative_to(directory)
+    except ValueError:
+        return False
+    return True

@@ -1,9 +1,12 @@
 from pathlib import Path
 
 from fastapi.testclient import TestClient
+from sqlmodel import Session, SQLModel, create_engine, select
 
 from app.core.config import get_settings
 from app.main import app
+from app.models.uploaded_file import UploadedFileRecord
+from app.services.uploads import cleanup_uploaded_files
 
 
 client = TestClient(app)
@@ -152,3 +155,34 @@ def test_openapi_documents_upload_contracts():
     assert "/uploads" in paths
     assert "/uploads/{file_id}" in paths
     assert "/uploads/{file_id}/task" in paths
+
+
+def test_cleanup_uploaded_files_removes_storage_and_metadata(tmp_path):
+    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+    SQLModel.metadata.create_all(engine)
+    stored_file = tmp_path / "file_cleanup_001.jpg"
+    stored_file.write_bytes(b"fake-jpeg")
+
+    with Session(engine) as session:
+        session.add(
+            UploadedFileRecord(
+                id="file_cleanup_001",
+                original_filename="cleanup.jpg",
+                stored_filename=stored_file.name,
+                storage_path=f"{tmp_path.name}/{stored_file.name}",
+                content_type="image/jpeg",
+                file_kind="image",
+                size_bytes=9,
+                sha256="fake-sha",
+                uploaded_by="yw001",
+                task_id="task_keep_history",
+            )
+        )
+        session.commit()
+
+        result = cleanup_uploaded_files(session=session, upload_dir=tmp_path)
+
+        assert result.records_deleted == 1
+        assert result.files_deleted == 1
+        assert not stored_file.exists()
+        assert session.exec(select(UploadedFileRecord)).all() == []
