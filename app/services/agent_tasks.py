@@ -11,7 +11,10 @@ from app.schemas.agent_tasks import (
     AgentTaskEventResponse,
     AgentTaskResponse,
 )
+from app.schemas.order_draft import OrderDraftPreview
 from app.schemas.uploads import UploadedFileResponse
+from app.services.extraction import OcrDocument, extract_order_draft
+from app.services.mock_ocr import get_mock_ocr_text
 
 
 CREATED_STATUS = "created"
@@ -25,6 +28,10 @@ TASK_CREATED_EVENT = "task_created"
 FILES_ATTACHED_EVENT = "files_attached"
 STATUS_CHANGED_EVENT = "status_changed"
 TASK_FAILED_EVENT = "task_failed"
+EXTRACTION_STARTED_EVENT = "extraction_started"
+MOCK_OCR_COMPLETED_EVENT = "mock_ocr_completed"
+FIELDS_EXTRACTED_EVENT = "fields_extracted"
+MISSING_FIELDS_DETECTED_EVENT = "missing_fields_detected"
 
 ALLOWED_TRANSITIONS: dict[str, set[str]] = {
     CREATED_STATUS: {EXTRACTING_STATUS, FAILED_STATUS},
@@ -129,6 +136,112 @@ def list_task_events(
     return [_event_to_response(event) for event in events]
 
 
+def extract_agent_task(
+    session: Session,
+    task_id: str,
+    current_username: str,
+) -> AgentTaskResponse | None:
+    task = session.get(AgentTaskRecord, task_id)
+    if task is None or task.created_by != current_username:
+        return None
+    if task.status != CREATED_STATUS:
+        raise AgentTaskError(f"Cannot extract task in status {task.status}")
+
+    records = _get_task_uploads(session, task)
+    if not records:
+        raise AgentTaskError("Agent task has no uploaded files")
+
+    _set_task_status(
+        task=task,
+        new_status=EXTRACTING_STATUS,
+    )
+    _add_event(
+        session=session,
+        task_id=task_id,
+        event_type=EXTRACTION_STARTED_EVENT,
+        actor=current_username,
+        from_status=CREATED_STATUS,
+        to_status=EXTRACTING_STATUS,
+        message="Mock OCR and field extraction started.",
+    )
+
+    documents = [
+        OcrDocument(
+            file_id=record.id,
+            filename=record.original_filename,
+            text=get_mock_ocr_text(record),
+        )
+        for record in records
+    ]
+    _add_event(
+        session=session,
+        task_id=task_id,
+        event_type=MOCK_OCR_COMPLETED_EVENT,
+        actor=current_username,
+        from_status=EXTRACTING_STATUS,
+        to_status=EXTRACTING_STATUS,
+        message="Deterministic mock OCR completed.",
+        details={"file_ids": [record.id for record in records]},
+    )
+
+    preview = extract_order_draft(documents)
+    final_status = NEED_MORE_INFO_STATUS if preview.missing_fields else READY_FOR_REVIEW_STATUS
+    task.draft_preview_json = preview.model_dump_json()
+    task.missing_fields_json = json.dumps(preview.missing_fields)
+    task.extraction_result_json = json.dumps(
+        {
+            "ocr_documents": [
+                {
+                    "file_id": document.file_id,
+                    "filename": document.filename,
+                    "text": document.text,
+                }
+                for document in documents
+            ],
+            "conflicts": [
+                conflict.model_dump(mode="json") for conflict in preview.conflicts
+            ],
+        },
+        ensure_ascii=True,
+    )
+    _set_task_status(
+        task=task,
+        new_status=final_status,
+    )
+    session.add(task)
+    _add_event(
+        session=session,
+        task_id=task_id,
+        event_type=FIELDS_EXTRACTED_EVENT,
+        actor=current_username,
+        from_status=EXTRACTING_STATUS,
+        to_status=final_status,
+        message="Draft fields extracted from mock OCR text.",
+        details={
+            "extracted_fields": [
+                field_name
+                for field_name, value in preview.fields.model_dump().items()
+                if value is not None
+            ],
+            "missing_fields": preview.missing_fields,
+        },
+    )
+    if preview.missing_fields:
+        _add_event(
+            session=session,
+            task_id=task_id,
+            event_type=MISSING_FIELDS_DETECTED_EVENT,
+            actor=current_username,
+            from_status=final_status,
+            to_status=final_status,
+            message="Required fields are missing from extracted draft preview.",
+            details={"missing_fields": preview.missing_fields},
+        )
+    session.commit()
+    session.refresh(task)
+    return _task_to_response(task, records)
+
+
 def transition_task_status(
     session: Session,
     task_id: str,
@@ -150,8 +263,7 @@ def transition_task_status(
         )
 
     previous_status = task.status
-    task.status = new_status
-    task.updated_at = utc_now()
+    _set_task_status(task=task, new_status=new_status)
     if new_status == FAILED_STATUS:
         task.error_code = error_code
         task.error_message = error_message or message
@@ -170,6 +282,11 @@ def transition_task_status(
     session.commit()
     session.refresh(task)
     return task
+
+
+def _set_task_status(task: AgentTaskRecord, new_status: str) -> None:
+    task.status = new_status
+    task.updated_at = utc_now()
 
 
 def _get_accessible_uploads(
@@ -246,13 +363,19 @@ def _task_to_response(
         customer_id=task.customer_id,
         file_ids=_file_ids_for_task(task),
         files=[_upload_to_response(record) for record in records],
-        draft_preview=None,
+        draft_preview=_draft_preview_for_task(task),
         questions=[],
         error_code=task.error_code,
         error_message=task.error_message,
         created_at=task.created_at,
         updated_at=task.updated_at,
     )
+
+
+def _draft_preview_for_task(task: AgentTaskRecord) -> OrderDraftPreview | None:
+    if task.draft_preview_json is None:
+        return None
+    return OrderDraftPreview.model_validate_json(task.draft_preview_json)
 
 
 def _event_to_response(event: AgentTaskEventRecord) -> AgentTaskEventResponse:

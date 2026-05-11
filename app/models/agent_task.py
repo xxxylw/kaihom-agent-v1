@@ -13,6 +13,9 @@ class AgentTaskRecord(SQLModel, table=True):
     customer_id: str | None = None
     status: str = "created"
     file_ids_json: str
+    draft_preview_json: str | None = None
+    missing_fields_json: str | None = None
+    extraction_result_json: str | None = None
     error_code: str | None = None
     error_message: str | None = None
     created_at: datetime = Field(default_factory=utc_now)

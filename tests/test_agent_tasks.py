@@ -50,10 +50,12 @@ def test_agent_task_routes_require_bearer_token():
     create_response = client.post("/agent/tasks", json={"file_ids": ["file_missing"]})
     get_response = client.get("/agent/tasks/task_missing")
     events_response = client.get("/agent/tasks/task_missing/events")
+    extract_response = client.post("/agent/tasks/task_missing/extract")
 
     assert create_response.status_code == 401
     assert get_response.status_code == 401
     assert events_response.status_code == 401
+    assert extract_response.status_code == 401
 
 
 def test_create_agent_task_from_one_file_starts_created():
@@ -200,6 +202,90 @@ def test_agent_task_transition_rules_allow_valid_and_reject_invalid():
             raise AssertionError("finalized task should not transition to extracting")
 
 
+def test_extract_agent_task_complete_fixture_reaches_ready_for_review():
+    headers = login_headers()
+    file_id = upload_file("complete-entrustment.jpg", b"fake-jpeg", "image/jpeg", headers)
+    task_id = create_task([file_id], headers=headers).json()["task_id"]
+
+    response = client.post(f"/agent/tasks/{task_id}/extract", headers=headers)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "ready_for_review"
+    assert body["questions"] == []
+    assert body["draft_preview"]["fields"]["customer_name"] == "Ningbo Future Trading Co., Ltd."
+    assert body["draft_preview"]["fields"]["cargo_name"] == "Auto parts"
+    assert body["draft_preview"]["missing_fields"] == []
+    assert body["draft_preview"]["field_evidence"]["cargo_name"]["source_file_id"] == file_id
+
+
+def test_extract_agent_task_incomplete_fixture_reaches_need_more_info():
+    headers = login_headers()
+    file_id = upload_file("incomplete-receipt.jpg", b"fake-jpeg", "image/jpeg", headers)
+    task_id = create_task([file_id], headers=headers).json()["task_id"]
+
+    response = client.post(f"/agent/tasks/{task_id}/extract", headers=headers)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "need_more_info"
+    assert "shipper_phone" in body["draft_preview"]["missing_fields"]
+    assert "consignee_address" in body["draft_preview"]["missing_fields"]
+
+    detail_response = client.get(f"/agent/tasks/{task_id}", headers=headers)
+    assert detail_response.status_code == 200
+    assert detail_response.json()["draft_preview"] == body["draft_preview"]
+
+
+def test_extract_agent_task_records_business_events():
+    headers = login_headers()
+    file_id = upload_file("complete-entrustment.jpg", b"fake-jpeg", "image/jpeg", headers)
+    task_id = create_task([file_id], headers=headers).json()["task_id"]
+
+    response = client.post(f"/agent/tasks/{task_id}/extract", headers=headers)
+    assert response.status_code == 200
+
+    events_response = client.get(f"/agent/tasks/{task_id}/events", headers=headers)
+    assert events_response.status_code == 200
+    event_types = [event["event_type"] for event in events_response.json()["events"]]
+    assert "extraction_started" in event_types
+    assert "mock_ocr_completed" in event_types
+    assert "fields_extracted" in event_types
+
+
+def test_extract_agent_task_rejects_invalid_state():
+    from app.services import agent_tasks
+
+    headers = login_headers()
+    file_id = upload_file("complete-entrustment.jpg", b"fake-jpeg", "image/jpeg", headers)
+    task_id = create_task([file_id], headers=headers).json()["task_id"]
+
+    with Session(engine) as session:
+        agent_tasks.transition_task_status(
+            session=session,
+            task_id=task_id,
+            new_status=agent_tasks.EXTRACTING_STATUS,
+            actor="yw001",
+        )
+        agent_tasks.transition_task_status(
+            session=session,
+            task_id=task_id,
+            new_status=agent_tasks.READY_FOR_REVIEW_STATUS,
+            actor="yw001",
+        )
+        agent_tasks.transition_task_status(
+            session=session,
+            task_id=task_id,
+            new_status=agent_tasks.FINALIZED_STATUS,
+            actor="yw001",
+        )
+
+    response = client.post(f"/agent/tasks/{task_id}/extract", headers=headers)
+
+    assert response.status_code == 400
+    assert "Cannot extract task in status finalized" in response.json()["detail"]
+
+
 def test_openapi_documents_agent_task_contracts():
     response = client.get("/openapi.json")
 
@@ -208,3 +294,4 @@ def test_openapi_documents_agent_task_contracts():
     assert "/agent/tasks" in paths
     assert "/agent/tasks/{task_id}" in paths
     assert "/agent/tasks/{task_id}/events" in paths
+    assert "/agent/tasks/{task_id}/extract" in paths

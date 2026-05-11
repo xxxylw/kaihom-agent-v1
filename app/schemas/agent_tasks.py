@@ -3,6 +3,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from app.schemas.order_draft import OrderDraftPreview
 from app.schemas.uploads import UploadedFileResponse
 
 
@@ -29,7 +30,7 @@ class AgentTaskResponse(BaseModel):
     customer_id: str | None = None
     file_ids: list[str]
     files: list[UploadedFileResponse]
-    draft_preview: dict[str, Any] | None = None
+    draft_preview: OrderDraftPreview | None = None
     questions: list[dict[str, Any]] = Field(default_factory=list)
     error_code: str | None = None
     error_message: str | None = None
