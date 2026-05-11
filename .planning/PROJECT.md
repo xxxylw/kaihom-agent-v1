@@ -17,11 +17,11 @@ A business user can upload logistics documents from a phone, let the Agent pre-f
 - [x] Build a Python FastAPI backend that exposes Agent APIs and Mock Kaihong APIs. Validated through Phase 4: Agent Task State Machine.
 - [x] Support mobile-friendly document image upload and local file metadata tracking. Validated through Phase 3: File Upload and Local Storage.
 - [x] Maintain an Agent task lifecycle from upload through extraction, clarification, review, and finalization. Phase 4 validates the task/status/event ledger; later phases fill extraction, clarification, and finalization behavior.
+- [x] Use a draft field schema that can later map to Kaihong Wing order fields. Validated through Phase 5: Mock OCR and Field Extraction.
 
 ### Active
 
 - [ ] Provide a mock business data layer for users, customers, dictionaries, historical orders, and order drafts.
-- [ ] Use a draft field schema that can later map to Kaihong Wing order fields.
 - [ ] Support missing-field and low-confidence clarification questions.
 - [ ] Save confirmed order drafts locally for inspection and future integration.
 - [ ] Produce OpenAPI documentation for future Java/Kaihong integration discussion.
@@ -68,7 +68,7 @@ The target product loop is:
 | Start with Python FastAPI only | No real Java/Kaihong access yet; Python is strongest for AI/OCR prototype work | Pending |
 | Implement Mock Kaihong API | Allows complete demo loop before enterprise integration | Pending |
 | Save drafts, not formal orders | Reduces business risk and supports human review | Pending |
-| Use Pydantic/SQLModel contracts | Keeps request, response, and draft schemas explicit and future-mappable | Pending |
+| Use Pydantic/SQLModel contracts | Keeps request, response, and draft schemas explicit and future-mappable | Validated through Phase 5 |
 | Start with mobile H5 | Fastest way to test phone upload without app-store or mini-program overhead | Pending |
 | Defer LangChain/LangGraph dependency decision | Phase 4 needs deterministic task state first; Phase 5/6 should discuss framework value when extraction and clarification behavior are planned | Pending |
 
@@ -90,4 +90,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state.
 
 ---
-*Last updated: 2026-05-09 after Phase 4 execution*
+*Last updated: 2026-05-11 after Phase 5 execution*

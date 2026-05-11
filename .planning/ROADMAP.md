@@ -55,11 +55,12 @@
 
 ## Phase 5: Mock OCR and Field Extraction
 
-**Status:** pending
+**Status:** completed
 **Goal:** Convert deterministic mock OCR text into structured logistics order draft fields.
 **Requirements:** EXTR-01, EXTR-02, EXTR-03, EXTR-04, EXTR-05
 **Dependencies:** Phase 4
 **Discussion Required:** During Phase 5 planning, discuss whether extraction should remain deterministic Python/Pydantic logic or whether LangChain/LangGraph-style structure should be introduced for future real OCR/LLM extraction.
+**Plan:** `.planning/phases/05-mock-ocr-and-field-extraction/05-01-PLAN.md`
 **Success Criteria:**
 - Core order draft schema exists.
 - Mock OCR text fixtures drive extraction.
@@ -99,4 +100,4 @@
 **Framework Evaluation:** Revisit LangChain/LangGraph when real OCR/LLM provider selection, tool orchestration, confidence scoring, or production workflow checkpointing becomes concrete.
 
 ---
-*Last updated: 2026-05-09 after Phase 4 execution*
+*Last updated: 2026-05-11 after Phase 5 execution*

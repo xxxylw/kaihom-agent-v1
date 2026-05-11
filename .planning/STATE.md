@@ -2,22 +2,22 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-current_phase: 5
-status: Executing Phase 5
-last_updated: "2026-05-11T05:45:52.032Z"
+current_phase: 6
+status: Ready to plan
+last_updated: "2026-05-11T05:59:25.901Z"
 progress:
   total_phases: 7
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 5
-  completed_plans: 4
-  percent: 80
+  completed_plans: 5
+  percent: 100
 ---
 
 # State: Kaihom Agent v1
 
-**Last Updated:** 2026-05-09
-**Current Phase:** 5
-**Current Status:** Phase 4 complete; ready to discuss Phase 5.
+**Last Updated:** 2026-05-11
+**Current Phase:** 6
+**Current Status:** Phase 5 complete; ready to discuss Phase 6.
 
 ## Project Reference
 
@@ -27,7 +27,7 @@ See: `.planning/PROJECT.md`
 
 ## Current Focus
 
-Prepare Phase 5 Mock OCR and Field Extraction. Phase 4 now creates durable Agent tasks from uploaded files, tracks product-facing statuses, records task events, links upload metadata to task IDs, and preserves service boundaries for future LangChain/LangGraph evaluation.
+Prepare Phase 6 Clarification and Draft Finalization. Phase 5 now creates typed logistics draft previews from deterministic mock OCR text, detects missing required fields, preserves source/evidence metadata, and updates Agent task status/events through the protected extraction workflow.
 
 ## Important Context
 
@@ -35,7 +35,7 @@ Prepare Phase 5 Mock OCR and Field Extraction. Phase 4 now creates durable Agent
 - Do not build real Java/Spring integration yet.
 - Do not connect to any real company database.
 - The first value loop is Mock-only: upload -> mock extraction -> clarification -> draft save.
-- Phase 4 should stay deterministic and framework-light, while preserving service boundaries for later LangChain/LangGraph evaluation.
+- Phase 5 stayed deterministic and framework-light, while preserving stable field names and metadata for future query/reporting projections.
 - Planning docs are committed to git per user choice.
 - GSD mode: YOLO, standard granularity, parallel execution, research/plan_check/verifier enabled.
 
@@ -44,7 +44,7 @@ Prepare Phase 5 Mock OCR and Field Extraction. Phase 4 now creates durable Agent
 Run:
 
 ```text
-$gsd-discuss-phase 5
+$gsd-discuss-phase 6
 ```
 
 ## Recent Decisions
@@ -65,6 +65,7 @@ $gsd-discuss-phase 5
 | 2026-05-09 | Phase 4 context captured task state machine decisions | Planning can now create an AgentTask/Event implementation around created-state tasks, optional customer IDs, multiple file IDs, service-controlled transitions, and future LangGraph/LangChain boundaries. |
 | 2026-05-09 | Phase 4 plan created | The executable plan covers AgentTask/Event persistence, protected task APIs, upload file linkage, deterministic transition helpers, tests, and future LangGraph/LangChain service boundaries. |
 | 2026-05-09 | Phase 4 implemented Agent task state machine | The backend now exposes protected `/agent/tasks` APIs, persists AgentTask/Event records, links uploaded files, enforces deterministic transitions, and keeps LangChain/LangGraph out of runtime dependencies. |
+| 2026-05-11 | Phase 5 implemented Mock OCR and field extraction | The backend now exposes protected task extraction, typed draft preview fields, deterministic mock OCR fixtures, missing-field detection, source/evidence metadata, and business-level extraction events. |
 
 ## Open Questions
 

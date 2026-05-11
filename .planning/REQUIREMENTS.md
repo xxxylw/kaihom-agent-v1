@@ -37,11 +37,11 @@
 
 ### Extraction and Draft Schema
 
-- [ ] **EXTR-01**: System defines a Pydantic order draft schema for the core logistics fields.
-- [ ] **EXTR-02**: System supports mock OCR text as a deterministic input source.
-- [ ] **EXTR-03**: System extracts draft fields from mock OCR text into the schema.
-- [ ] **EXTR-04**: System marks missing required fields.
-- [ ] **EXTR-05**: System preserves source/evidence metadata where available.
+- [x] **EXTR-01**: System defines a Pydantic order draft schema for the core logistics fields.
+- [x] **EXTR-02**: System supports mock OCR text as a deterministic input source.
+- [x] **EXTR-03**: System extracts draft fields from mock OCR text into the schema.
+- [x] **EXTR-04**: System marks missing required fields.
+- [x] **EXTR-05**: System preserves source/evidence metadata where available.
 
 ### Clarification Loop
 
@@ -124,11 +124,11 @@
 | TASK-02 | Phase 4 | Complete |
 | TASK-03 | Phase 4 | Complete |
 | TASK-04 | Phase 4 | Complete |
-| EXTR-01 | Phase 5 | Pending |
-| EXTR-02 | Phase 5 | Pending |
-| EXTR-03 | Phase 5 | Pending |
-| EXTR-04 | Phase 5 | Pending |
-| EXTR-05 | Phase 5 | Pending |
+| EXTR-01 | Phase 5 | Complete |
+| EXTR-02 | Phase 5 | Complete |
+| EXTR-03 | Phase 5 | Complete |
+| EXTR-04 | Phase 5 | Complete |
+| EXTR-05 | Phase 5 | Complete |
 | CLAR-01 | Phase 6 | Pending |
 | CLAR-02 | Phase 6 | Pending |
 | CLAR-03 | Phase 6 | Pending |
