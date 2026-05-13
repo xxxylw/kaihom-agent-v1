@@ -16,6 +16,7 @@ class AgentTaskRecord(SQLModel, table=True):
     draft_preview_json: str | None = None
     missing_fields_json: str | None = None
     extraction_result_json: str | None = None
+    finalized_draft_id: str | None = None
     error_code: str | None = None
     error_message: str | None = None
     created_at: datetime = Field(default_factory=utc_now)

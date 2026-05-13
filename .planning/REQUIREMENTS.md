@@ -45,17 +45,17 @@
 
 ### Clarification Loop
 
-- [ ] **CLAR-01**: System generates user-facing clarification questions for missing required fields.
-- [ ] **CLAR-02**: User can submit answers for clarification questions.
-- [ ] **CLAR-03**: System merges user answers into the draft.
-- [ ] **CLAR-04**: System transitions to ready_for_review once required fields are complete.
+- [x] **CLAR-01**: System generates user-facing clarification questions for missing required fields.
+- [x] **CLAR-02**: User can submit answers for clarification questions.
+- [x] **CLAR-03**: System merges user answers into the draft.
+- [x] **CLAR-04**: System transitions to ready_for_review once required fields are complete.
 
 ### Draft Finalization
 
-- [ ] **DRAFT-01**: User can finalize a ready draft.
-- [ ] **DRAFT-02**: Finalized draft is saved locally through the Mock Kaihong API boundary.
-- [ ] **DRAFT-03**: Finalized draft response includes `draft_id`, field values, source file references, and audit metadata.
-- [ ] **DRAFT-04**: OpenAPI docs show future Java/Kaihong-facing request and response contracts.
+- [x] **DRAFT-01**: User can finalize a ready draft.
+- [x] **DRAFT-02**: Finalized draft is saved locally through the Mock Kaihong API boundary.
+- [x] **DRAFT-03**: Finalized draft response includes `draft_id`, field values, source file references, and audit metadata.
+- [x] **DRAFT-04**: OpenAPI docs show future Java/Kaihong-facing request and response contracts.
 
 ### Mobile Demo
 
@@ -129,14 +129,14 @@
 | EXTR-03 | Phase 5 | Complete |
 | EXTR-04 | Phase 5 | Complete |
 | EXTR-05 | Phase 5 | Complete |
-| CLAR-01 | Phase 6 | Pending |
-| CLAR-02 | Phase 6 | Pending |
-| CLAR-03 | Phase 6 | Pending |
-| CLAR-04 | Phase 6 | Pending |
-| DRAFT-01 | Phase 6 | Pending |
-| DRAFT-02 | Phase 6 | Pending |
-| DRAFT-03 | Phase 6 | Pending |
-| DRAFT-04 | Phase 6 | Pending |
+| CLAR-01 | Phase 6 | Complete |
+| CLAR-02 | Phase 6 | Complete |
+| CLAR-03 | Phase 6 | Complete |
+| CLAR-04 | Phase 6 | Complete |
+| DRAFT-01 | Phase 6 | Complete |
+| DRAFT-02 | Phase 6 | Complete |
+| DRAFT-03 | Phase 6 | Complete |
+| DRAFT-04 | Phase 6 | Complete |
 | MOB-01 | Phase 7 | Pending |
 | MOB-02 | Phase 7 | Pending |
 | MOB-03 | Phase 7 | Pending |
@@ -150,4 +150,4 @@
 
 ---
 *Requirements defined: 2026-05-07*
-*Last updated: 2026-05-09 after Phase 4 execution*
+*Last updated: 2026-05-13 after Phase 6 execution*

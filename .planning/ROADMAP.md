@@ -69,11 +69,15 @@
 
 ## Phase 6: Clarification and Draft Finalization
 
-**Status:** pending
-**Goal:** Let the Agent ask for missing fields, merge answers, and save final drafts.
+**Status:** completed
+**Goal:** Use LangGraph and DeepSeek text reasoning to ask for missing/uncertain fields, merge user answers, and save final drafts.
 **Requirements:** CLAR-01, CLAR-02, CLAR-03, CLAR-04, DRAFT-01, DRAFT-02, DRAFT-03, DRAFT-04
 **Dependencies:** Phase 5
-**Discussion Required:** During Phase 6 planning, explicitly evaluate LangGraph for multi-step clarification, human-in-the-loop state transitions, and future LLM/tool orchestration. LangChain should be considered only if the phase needs prompt chains, tool calling, or retrieval-style composition.
+**Framework Decision:** Phase 6 introduces LangGraph for the human-in-the-loop clarification state machine and direct DeepSeek API access for text-only question generation and answer parsing. Image/PDF multimodal field recognition is deferred; the existing `/extract` -> `draft_preview` contract remains the boundary.
+**Plans:**
+- `.planning/phases/06-clarification-and-draft-finalization/06-01-PLAN.md`
+- `.planning/phases/06-clarification-and-draft-finalization/06-02-PLAN.md`
+**Verification:** `.planning/phases/06-clarification-and-draft-finalization/06-VERIFICATION.md`
 **Success Criteria:**
 - Missing fields produce clear questions.
 - User answers update the draft.
@@ -100,4 +104,4 @@
 **Framework Evaluation:** Revisit LangChain/LangGraph when real OCR/LLM provider selection, tool orchestration, confidence scoring, or production workflow checkpointing becomes concrete.
 
 ---
-*Last updated: 2026-05-11 after Phase 5 execution*
+*Last updated: 2026-05-13 after Phase 6 execution*

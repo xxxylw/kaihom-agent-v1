@@ -4,12 +4,18 @@ from sqlmodel import Session
 from app.api.mock_kaihong import get_current_user
 from app.db.session import get_session
 from app.schemas.agent_tasks import (
+    AgentTaskFinalizeResponse,
     AgentTaskCreateRequest,
     AgentTaskEventsResponse,
     AgentTaskResponse,
 )
+from app.schemas.clarification import (
+    ClarificationAnswerRequest,
+    ClarificationAnswerResponse,
+    ClarificationStatusResponse,
+)
 from app.schemas.mock_kaihong import MockUserResponse
-from app.services import agent_tasks
+from app.services import agent_tasks, clarification
 
 
 router = APIRouter(prefix="/agent/tasks", tags=["Agent Tasks"])
@@ -69,3 +75,56 @@ def get_agent_task_events(
     if events is None:
         raise HTTPException(status_code=404, detail="Agent task not found")
     return AgentTaskEventsResponse(events=events)
+
+
+@router.get("/{task_id}/clarification", response_model=ClarificationStatusResponse)
+def get_task_clarification(
+    task_id: str,
+    session: Session = Depends(get_session),
+    current_user: MockUserResponse = Depends(get_current_user),
+) -> ClarificationStatusResponse:
+    try:
+        return clarification.get_or_create_clarification(
+            session=session,
+            task_id=task_id,
+            current_username=current_user.username,
+        )
+    except clarification.ClarificationError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
+
+
+@router.post(
+    "/{task_id}/clarification/answers",
+    response_model=ClarificationAnswerResponse,
+)
+def submit_task_clarification_answer(
+    task_id: str,
+    request: ClarificationAnswerRequest,
+    session: Session = Depends(get_session),
+    current_user: MockUserResponse = Depends(get_current_user),
+) -> ClarificationAnswerResponse:
+    try:
+        return clarification.submit_clarification_answer(
+            session=session,
+            task_id=task_id,
+            current_username=current_user.username,
+            request=request,
+        )
+    except clarification.ClarificationError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
+
+
+@router.post("/{task_id}/finalize", response_model=AgentTaskFinalizeResponse)
+def finalize_agent_task(
+    task_id: str,
+    session: Session = Depends(get_session),
+    current_user: MockUserResponse = Depends(get_current_user),
+) -> AgentTaskFinalizeResponse:
+    try:
+        return clarification.finalize_agent_task(
+            session=session,
+            task_id=task_id,
+            current_username=current_user.username,
+        )
+    except clarification.ClarificationError as exc:
+        raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc

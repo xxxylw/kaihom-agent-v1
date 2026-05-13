@@ -3,6 +3,7 @@ from collections.abc import Generator
 from sqlmodel import Session, SQLModel, create_engine, text
 
 from app.core.config import get_settings
+from app.models import agent_graph_session as _agent_graph_session
 from app.models import agent_task as _agent_task
 from app.models import draft as _draft
 from app.models import uploaded_file as _uploaded_file
@@ -29,6 +30,7 @@ def _ensure_agent_task_extraction_columns() -> None:
             "draft_preview_json",
             "missing_fields_json",
             "extraction_result_json",
+            "finalized_draft_id",
         ]:
             if column not in columns:
                 connection.execute(

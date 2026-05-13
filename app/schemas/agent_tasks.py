@@ -40,3 +40,12 @@ class AgentTaskResponse(BaseModel):
 
 class AgentTaskEventsResponse(BaseModel):
     events: list[AgentTaskEventResponse]
+
+
+class AgentTaskFinalizeResponse(BaseModel):
+    task_id: str
+    status: str
+    draft_id: str
+    draft_preview: OrderDraftPreview
+    source_file_ids: list[str]
+    audit: dict[str, Any] = Field(default_factory=dict)

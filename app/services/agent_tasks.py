@@ -289,6 +289,10 @@ def _set_task_status(task: AgentTaskRecord, new_status: str) -> None:
     task.updated_at = utc_now()
 
 
+def set_task_status(task: AgentTaskRecord, new_status: str) -> None:
+    _set_task_status(task, new_status)
+
+
 def _get_accessible_uploads(
     session: Session,
     file_ids: list[str],
@@ -351,6 +355,28 @@ def _add_event(
     )
     session.add(event)
     return event
+
+
+def add_task_event(
+    session: Session,
+    task_id: str,
+    event_type: str,
+    actor: str | None,
+    from_status: str | None,
+    to_status: str | None,
+    message: str | None,
+    details: dict[str, Any] | None = None,
+) -> AgentTaskEventRecord:
+    return _add_event(
+        session=session,
+        task_id=task_id,
+        event_type=event_type,
+        actor=actor,
+        from_status=from_status,
+        to_status=to_status,
+        message=message,
+        details=details,
+    )
 
 
 def _task_to_response(

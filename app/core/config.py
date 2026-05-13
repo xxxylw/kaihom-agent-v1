@@ -12,6 +12,12 @@ class Settings(BaseSettings):
     upload_max_file_size_bytes: int = 20 * 1024 * 1024
     upload_max_files_per_request: int = 10
     upload_max_request_size_bytes: int = 100 * 1024 * 1024
+    deepseek_api_key: str | None = None
+    deepseek_base_url: str = "https://api.deepseek.com"
+    deepseek_model: str = "deepseek-v4-flash"
+    deepseek_timeout_seconds: float = 30.0
+    deepseek_max_retries: int = 1
+    clarification_max_rounds: int = 8
 
     model_config = SettingsConfigDict(
         env_file=".env",
