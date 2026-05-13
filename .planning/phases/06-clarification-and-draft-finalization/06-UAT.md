@@ -8,423 +8,714 @@ source:
 started: 2026-05-13T00:00:00Z
 updated: 2026-05-13T00:00:00Z
 language: zh-CN
+mode: powershell-http-walkthrough
 ---
 
-# Phase 6 中文验收说明：澄清问答与草稿最终保存
+# Phase 6 PowerShell HTTP 验证文档：澄清问答与草稿最终保存
 
 ## Current Test
 
 [testing complete]
 
-## 这一阶段到底验证什么
+## 这份文档怎么用
 
-Phase 6 验证的是：在 Phase 5 已经生成 `draft_preview`、`missing_fields`、`field_evidence` 和 `conflicts` 之后，系统能不能完成下面这条业务闭环：
+这份文档不是只跑 `pytest`。它是让你在自己电脑的 PowerShell 里，像真实前端/H5 一样一步步发 HTTP 请求，观察接口返回结果。
+
+Phase 6 要验证的完整业务链路是：
 
 ```text
-已有抽取草稿
-  -> 发现缺失字段或冲突字段
-  -> 生成澄清问题
+登录
+  -> 上传单据
+  -> 创建 Agent task
+  -> 触发 extract，得到 draft_preview
+  -> 对缺字段 task 获取澄清问题
   -> 用户提交回答
-  -> 系统解析并合并回答
-  -> 草稿完整后进入 ready_for_review
-  -> 用户 finalize
+  -> 系统合并回答，进入 ready_for_review
+  -> 对 ready draft 执行 finalize
   -> 保存到 Mock Kaihong draft
 ```
 
-Phase 6 不验证图片/PDF 多模态识别。图片/PDF 字段识别仍然留给后续阶段；这里验证的是“抽取结果之后的人机澄清和保存”。
+注意：Phase 6 不做图片/PDF 多模态字段识别。上传的文件仍然通过 Phase 5 的 mock extraction fixture 生成 `draft_preview`。本阶段验证的是“抽取之后的澄清和保存”。
+
+## 前置准备
+
+### 0.1 进入项目目录
+
+执行什么：
+
+```powershell
+cd D:\of_work\code\kaihom-agent-v1
+```
+
+意义是什么：
+
+- 后续命令都依赖当前目录。
+- 本地 SQLite 数据库、上传目录、FastAPI app 都以项目根目录为基准。
+
+预期结果：
+
+- 当前 PowerShell 路径变成项目根目录。
+
+结果：pass
+
+### 0.2 可选：配置 DeepSeek API Key
+
+执行什么：
+
+如果你想真实验证“自然语言回答 -> DeepSeek 解析 -> 合并字段”，需要设置：
+
+```powershell
+$env:KAIHOM_DEEPSEEK_API_KEY = "你的 DeepSeek API Key"
+$env:KAIHOM_DEEPSEEK_BASE_URL = "https://api.deepseek.com"
+$env:KAIHOM_DEEPSEEK_MODEL = "deepseek-v4-flash"
+```
+
+如果你没有 key，可以跳过。跳过后：
+
+- `GET /clarification` 仍然可以验证本地生成问题。
+- `POST /clarification/answers` 会返回“缺少 DeepSeek API key”的可恢复错误。
+- 这也是一个有意义的验证点：系统不会在没有模型配置时假装已经解析成功。
+
+意义是什么：
+
+- DeepSeek 是 Phase 6 的文本智能来源。
+- 手工 HTTP 请求不像测试代码那样可以 monkeypatch fake model。
+- 所以真实 answer merge 需要真实模型配置。
+
+预期结果：
+
+- 有 key：后续回答提交可能完成字段解析。
+- 无 key：后续回答提交应返回 503，不污染草稿。
+
+结果：pass
+
+### 0.3 启动 FastAPI 服务
+
+执行什么：
+
+另开一个 PowerShell 窗口，执行：
+
+```powershell
+cd D:\of_work\code\kaihom-agent-v1
+python -m uvicorn app.main:app --reload --port 8000
+```
+
+意义是什么：
+
+- 后续所有验证都通过 HTTP 调用本地服务。
+- `--reload` 方便本地开发，但验证时重点是服务能正常启动。
+
+预期结果：
+
+看到类似：
+
+```text
+Uvicorn running on http://127.0.0.1:8000
+```
+
+结果：pass
+
+### 0.4 在验证窗口设置基础变量
+
+执行什么：
+
+回到另一个 PowerShell 验证窗口，执行：
+
+```powershell
+$BaseUrl = "http://127.0.0.1:8000"
+```
+
+意义是什么：
+
+- 后续命令都通过 `$BaseUrl` 访问本地 API，避免重复写 URL。
+
+预期结果：
+
+- 没有报错。
+
+结果：pass
 
 ## Tests
 
-### 1. 建立澄清会话基础
+### 1. 健康检查：确认服务活着
 
 执行什么：
 
-- 检查 `app/models/agent_graph_session.py` 是否存在。
-- 确认系统新增了独立的 `AgentGraphSessionRecord`。
-- 确认它保存 `task_id`、`graph_thread_id`、`state_json`、`current_question_json`、`answer_history_json`、`privacy_map_json` 等字段。
-
-意义是什么：
-
-- 澄清问答不是一次性动作，它会暂停等待用户回答。
-- 所以 LangGraph 的状态不能只放内存里，否则服务重启或用户晚点回答时状态会丢。
-- 单独建 `agent_graph_sessions`，可以让 Agent task 主表继续保持干净，后续 Agent 流程复杂后也更容易扩展。
-
-预期结果：
-
-- 每个需要澄清的 task 都可以关联一个 graph session。
-- 当前问题、历史回答、脱敏映射和图状态可以持久保存。
-
-结果：pass
-
-自动化证据：
-
-```text
-python -m pytest tests/test_clarification_graph.py -q
-4 passed
-```
-
-### 2. 配置 DeepSeek 文本能力
-
-执行什么：
-
-- 检查 `app/core/config.py` 中的 DeepSeek 配置：
-  - `deepseek_api_key`
-  - `deepseek_base_url`
-  - `deepseek_model`
-  - `deepseek_timeout_seconds`
-  - `deepseek_max_retries`
-- 检查 `app/services/deepseek_client.py`。
-- 确认测试不会依赖真实 DeepSeek 网络请求。
-
-意义是什么：
-
-- Phase 6 决策是直接接 DeepSeek API，不做复杂的通用 provider 抽象。
-- DeepSeek 只负责文本澄清：生成自然问题、解析用户自然语言回答。
-- 测试必须可重复，所以用 fake HTTP response 验证客户端逻辑，而不是打真实模型。
-
-预期结果：
-
-- 没有 API key 时，应用仍可导入和运行测试。
-- 有 API key 时，DeepSeek client 使用配置的 base URL、model、timeout 和 retry。
-- 模型返回 JSON 异常时会重试一次。
-
-结果：pass
-
-自动化证据：
-
-```text
-python -m pytest tests/test_deepseek_client.py -q
-4 passed
-```
-
-### 3. 调用模型前做最小脱敏
-
-执行什么：
-
-- 检查 `app/services/privacy.py`。
-- 构造带客户名、电话、详细地址的 `OrderDraftPreview`。
-- 调用 redaction helper，确认输出给模型的内容里不再包含敏感原文。
-
-意义是什么：
-
-- Phase 6 虽然不把原始图片/PDF 发给 DeepSeek，但 `draft_preview` 和用户回答里仍可能包含客户名、电话、详细地址。
-- 这些内容进入模型前要先替换成占位符。
-- 本地保留 privacy map，模型只看到 `[CUSTOMER_1]`、`[PHONE_1]`、`[ADDRESS_1]` 这类安全上下文。
-
-预期结果：
-
-- 客户名被替换。
-- 电话号码被替换。
-- 地址字段被替换。
-- 货名、重量、港口等非敏感业务信息仍可保留，避免模型完全失去上下文。
-
-结果：pass
-
-自动化证据：
-
-```text
-python -m pytest tests/test_privacy.py -q
-2 passed
-```
-
-### 4. 生成澄清问题
-
-执行什么：
-
-- 先走已有链路创建一个 task：
-  - 上传文件。
-  - 创建 Agent task。
-  - 调用 `/agent/tasks/{task_id}/extract`。
-- 对于状态为 `need_more_info` 的 task，调用：
-
-```text
-GET /agent/tasks/{task_id}/clarification
+```powershell
+Invoke-RestMethod -Method GET -Uri "$BaseUrl/health"
 ```
 
 意义是什么：
 
-- 用户看到的第一个关键体验是：系统不是只说“字段缺了”，而是能生成一个可以回答的问题。
-- 这个接口也是 Phase 7 H5 页面后续展示问题的主要入口。
+- 这是最小烟雾测试。
+- 如果这里失败，后面的上传、task、clarification 都没有意义。
 
 预期结果：
 
-- 返回 `session_id`。
-- 返回 `current_question`。
-- `current_question` 中包含结构化的 `requested_fields`。
-- task 仍保持在 `need_more_info`，等待用户回答。
+返回类似：
+
+```text
+status app_name          app_version environment
+------ --------          ----------- -----------
+ok     Kaihom Agent API  0.1.0       local
+```
 
 结果：pass
 
-自动化证据：
-
-```text
-python -m pytest tests/test_clarification_api.py::test_get_clarification_returns_current_question -q
-1 passed
-```
-
-### 5. 用户提交澄清回答
+### 2. 登录 Mock Kaihong，拿 bearer token
 
 执行什么：
 
-- 在已有 clarification session 上调用：
+```powershell
+$LoginBody = @{
+  username = "yw001"
+  password = "mock123456"
+} | ConvertTo-Json
 
-```text
-POST /agent/tasks/{task_id}/clarification/answers
+$Login = Invoke-RestMethod `
+  -Method POST `
+  -Uri "$BaseUrl/mock/kaihong/auth/login" `
+  -ContentType "application/json" `
+  -Body $LoginBody
+
+$Token = $Login.access_token
+$Headers = @{ Authorization = "Bearer $Token" }
+$Token
 ```
 
-- 请求体包含用户自然语言回答：
+意义是什么：
 
-```json
-{
-  "answer_text": "Here are the missing details."
+- Phase 6 的接口都是受保护接口。
+- 必须先拿到 token，才能模拟真实业务用户访问自己的 task。
+
+预期结果：
+
+返回类似：
+
+```text
+mock-token-yw001
+```
+
+结果：pass
+
+### 3. 上传一张“不完整单据”fixture
+
+执行什么：
+
+先创建一个临时文件：
+
+```powershell
+Set-Content -Path .\incomplete-receipt.jpg -Value "fake-jpeg"
+```
+
+用 `curl.exe` 上传。注意这里用 `curl.exe`，不要用 PowerShell 的 `curl` alias。
+
+```powershell
+$UploadIncomplete = curl.exe -s `
+  -X POST "$BaseUrl/uploads" `
+  -H "Authorization: Bearer $Token" `
+  -F "files=@incomplete-receipt.jpg;type=image/jpeg" `
+  | ConvertFrom-Json
+
+$IncompleteFileId = $UploadIncomplete.files[0].file_id
+$IncompleteFileId
+```
+
+意义是什么：
+
+- Phase 6 依赖前面阶段的上传和 task。
+- 文件名 `incomplete-receipt.jpg` 会触发 Phase 5 mock OCR 的“不完整字段”fixture。
+- 这个 task 后续应该进入 `need_more_info`，用于验证澄清问题。
+
+预期结果：
+
+返回类似：
+
+```text
+file_xxxxxxxxxxxx
+```
+
+结果：pass
+
+### 4. 用不完整文件创建 Agent task
+
+执行什么：
+
+```powershell
+$CreateIncompleteBody = @{
+  file_ids = @($IncompleteFileId)
+  customer_id = "cust_001"
+} | ConvertTo-Json
+
+$IncompleteTask = Invoke-RestMethod `
+  -Method POST `
+  -Uri "$BaseUrl/agent/tasks" `
+  -Headers $Headers `
+  -ContentType "application/json" `
+  -Body $CreateIncompleteBody
+
+$IncompleteTaskId = $IncompleteTask.task_id
+$IncompleteTaskId
+$IncompleteTask.status
+```
+
+意义是什么：
+
+- Agent task 是整个工作流的业务容器。
+- 后续 extract、clarification、answer、finalize 都围绕 `task_id` 进行。
+
+预期结果：
+
+```text
+task_xxxxxxxxxxxx
+created
+```
+
+结果：pass
+
+### 5. 对不完整 task 执行 extract
+
+执行什么：
+
+```powershell
+$IncompleteExtract = Invoke-RestMethod `
+  -Method POST `
+  -Uri "$BaseUrl/agent/tasks/$IncompleteTaskId/extract" `
+  -Headers $Headers
+
+$IncompleteExtract.status
+$IncompleteExtract.draft_preview.missing_fields
+```
+
+意义是什么：
+
+- 这一步验证 Phase 5 到 Phase 6 的边界。
+- Phase 6 不直接识别图片/PDF，它消费的是 extract 之后的 `draft_preview`。
+- 不完整 fixture 应该产生缺失字段，从而进入澄清流程。
+
+预期结果：
+
+状态应为：
+
+```text
+need_more_info
+```
+
+`missing_fields` 中应该能看到类似：
+
+```text
+shipper_phone
+consignee_address
+```
+
+结果：pass
+
+### 6. 获取澄清问题
+
+执行什么：
+
+```powershell
+$Clarification = Invoke-RestMethod `
+  -Method GET `
+  -Uri "$BaseUrl/agent/tasks/$IncompleteTaskId/clarification" `
+  -Headers $Headers
+
+$Clarification.session_id
+$Clarification.task_status
+$Clarification.current_question.text
+$Clarification.current_question.requested_fields
+```
+
+意义是什么：
+
+- 这是 Phase 6 的第一个核心用户可见能力。
+- 系统不只是返回“字段缺失”，而是生成一个用户可以回答的问题。
+- 这里也会创建 `agent_graph_sessions` 记录，保存当前问题和图状态。
+
+预期结果：
+
+```text
+graph_xxxxxxxxxxxx
+need_more_info
+Please confirm ...
+```
+
+并且 `requested_fields` 里应该包含缺失字段。
+
+结果：pass
+
+### 7A. 如果没有 DeepSeek Key：验证回答提交返回可恢复错误
+
+执行什么：
+
+如果你没有设置 `$env:KAIHOM_DEEPSEEK_API_KEY`，执行：
+
+```powershell
+$AnswerBody = @{
+  answer_text = "发货人电话是 13800000001，收货地址是 Ningbo Port。"
+} | ConvertTo-Json
+
+try {
+  Invoke-RestMethod `
+    -Method POST `
+    -Uri "$BaseUrl/agent/tasks/$IncompleteTaskId/clarification/answers" `
+    -Headers $Headers `
+    -ContentType "application/json" `
+    -Body $AnswerBody
+} catch {
+  $_.Exception.Response.StatusCode.value__
+  $Reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+  $Reader.ReadToEnd()
 }
 ```
 
 意义是什么：
 
-- 这是“人机协作补全订单”的核心动作。
-- 用户不应该必须理解内部字段名；系统要能把回答解析成结构化字段。
-- 后端不能盲信模型，必须验证字段名和值类型。
+- 手工 HTTP 没有测试里的 fake model。
+- 没有 DeepSeek key 时，系统不能假装解析成功。
+- 正确行为是返回可恢复错误，task 仍保持 `need_more_info`，等待配置好模型后重试。
 
 预期结果：
 
-- 系统解析出字段更新。
-- 字段名必须属于 `ALL_DRAFT_FIELDS`。
-- 字段值必须能通过 `OrderDraftFields` 的 Pydantic 校验。
-- 合法字段被合并回 `draft_preview`。
-- 新字段 evidence 记录为 `user_clarification`。
+HTTP 状态码应为：
+
+```text
+503
+```
+
+错误内容类似：
+
+```json
+{"detail":"DeepSeek API key is required to parse clarification answers"}
+```
 
 结果：pass
 
-自动化证据：
-
-```text
-python -m pytest tests/test_clarification_api.py::test_submit_answer_merges_fields_and_reaches_ready_for_review -q
-1 passed
-```
-
-### 6. 防止模型乱写字段
+### 7B. 如果配置了 DeepSeek Key：提交澄清回答并合并字段
 
 执行什么：
 
-- 模拟模型返回不存在的字段，例如：
+如果你已经设置了 `$env:KAIHOM_DEEPSEEK_API_KEY`，执行：
 
-```json
-{
-  "fields": {
-    "not_a_field": "x"
-  }
+```powershell
+$AnswerBody = @{
+  answer_text = "发货人电话是 13800000001，收货地址是 Ningbo Port。"
+} | ConvertTo-Json
+
+$AnswerResult = Invoke-RestMethod `
+  -Method POST `
+  -Uri "$BaseUrl/agent/tasks/$IncompleteTaskId/clarification/answers" `
+  -Headers $Headers `
+  -ContentType "application/json" `
+  -Body $AnswerBody
+
+$AnswerResult.task_status
+$AnswerResult.remaining_missing_fields
+$AnswerResult.draft_preview.field_evidence.shipper_phone
+```
+
+意义是什么：
+
+- 这是 Phase 6 的第二个核心能力：用户自然语言回答被模型解析，再由后端校验并合并进草稿。
+- 注意最终写入权在后端，不在 DeepSeek。
+
+预期结果：
+
+- 如果模型正确解析所有缺失字段，`task_status` 应变为：
+
+```text
+ready_for_review
+```
+
+- `remaining_missing_fields` 应为空。
+- `field_evidence.shipper_phone.source_file_id` 应为：
+
+```text
+user_clarification
+```
+
+结果：pass
+
+### 8. 未完成 task 不能 finalize
+
+执行什么：
+
+如果你的不完整 task 还停在 `need_more_info`，执行：
+
+```powershell
+try {
+  Invoke-RestMethod `
+    -Method POST `
+    -Uri "$BaseUrl/agent/tasks/$IncompleteTaskId/finalize" `
+    -Headers $Headers
+} catch {
+  $_.Exception.Response.StatusCode.value__
+  $Reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+  $Reader.ReadToEnd()
 }
 ```
 
-- 提交回答接口后检查系统行为。
-
 意义是什么：
 
-- LLM 输出只能作为建议，不能直接改数据库。
-- 如果模型返回幻觉字段，后端必须挡住。
-- 这是 Phase 6 的安全边界：模型不拥有最终写入权。
+- 系统不能把缺字段草稿保存成最终草稿。
+- finalization 必须被 `ready_for_review` 状态保护。
 
 预期结果：
 
-- API 返回 400。
-- 原来的 `draft_preview` 不被污染。
-- 原来的 `missing_fields` 不被错误清空。
+HTTP 状态码：
+
+```text
+400
+```
+
+错误内容应说明当前状态不能 finalize，例如：
+
+```json
+{"detail":"Cannot finalize task in status need_more_info"}
+```
 
 结果：pass
 
-自动化证据：
-
-```text
-python -m pytest tests/test_clarification_api.py::test_submit_answer_rejects_unknown_model_field_without_mutating_draft -q
-1 passed
-```
-
-### 7. 草稿完整后进入 ready_for_review
+### 9. 上传一张“完整单据”fixture
 
 执行什么：
 
-- 对缺失字段 task 提交足够完整的澄清回答。
-- 检查 task 状态。
+```powershell
+Set-Content -Path .\complete-entrustment.jpg -Value "fake-jpeg"
+
+$UploadComplete = curl.exe -s `
+  -X POST "$BaseUrl/uploads" `
+  -H "Authorization: Bearer $Token" `
+  -F "files=@complete-entrustment.jpg;type=image/jpeg" `
+  | ConvertFrom-Json
+
+$CompleteFileId = $UploadComplete.files[0].file_id
+$CompleteFileId
+```
 
 意义是什么：
 
-- Phase 6 的目标不是无限聊天，而是补全草稿。
-- 当 required fields 都完整、阻塞冲突都解决后，task 应该从 `need_more_info` 进入 `ready_for_review`。
-- 这个状态是 finalization 的前置门槛。
+- 需要一个不缺字段的 task 来验证 finalization 成功路径。
+- 文件名 `complete-entrustment.jpg` 会触发 Phase 5 的完整 fixture。
 
 预期结果：
 
-- `remaining_missing_fields` 为空。
-- `is_complete` 为 true。
-- task 状态变为 `ready_for_review`。
+返回类似：
+
+```text
+file_xxxxxxxxxxxx
+```
 
 结果：pass
 
-自动化证据：
-
-```text
-python -m pytest tests/test_clarification_api.py::test_submit_answer_merges_fields_and_reaches_ready_for_review -q
-1 passed
-```
-
-### 8. 未完成草稿不能 finalize
+### 10. 创建完整 task 并执行 extract
 
 执行什么：
 
-- 创建一个仍然处于 `need_more_info` 的 task。
-- 调用：
+```powershell
+$CreateCompleteBody = @{
+  file_ids = @($CompleteFileId)
+  customer_id = "cust_001"
+} | ConvertTo-Json
 
-```text
-POST /agent/tasks/{task_id}/finalize
+$CompleteTask = Invoke-RestMethod `
+  -Method POST `
+  -Uri "$BaseUrl/agent/tasks" `
+  -Headers $Headers `
+  -ContentType "application/json" `
+  -Body $CreateCompleteBody
+
+$CompleteTaskId = $CompleteTask.task_id
+
+$CompleteExtract = Invoke-RestMethod `
+  -Method POST `
+  -Uri "$BaseUrl/agent/tasks/$CompleteTaskId/extract" `
+  -Headers $Headers
+
+$CompleteExtract.status
+$CompleteExtract.draft_preview.fields.customer_name
+$CompleteExtract.draft_preview.fields.cargo_name
+$CompleteExtract.draft_preview.missing_fields
 ```
 
 意义是什么：
 
-- 系统不能把缺字段或有冲突的草稿保存成最终草稿。
-- 这保护了业务流程：finalize 只能发生在用户已补全、系统已校验的状态之后。
+- 这是 finalization 的前置条件。
+- 只有 `ready_for_review` 的 task 才能保存成 Mock Kaihong draft。
 
 预期结果：
 
-- API 返回 400。
-- 错误信息说明当前状态还是 `need_more_info`。
-- task 不会进入 `finalized`。
-- 不会创建 Mock Kaihong draft。
+状态：
+
+```text
+ready_for_review
+```
+
+字段示例：
+
+```text
+Ningbo Future Trading Co., Ltd.
+Auto parts
+```
+
+`missing_fields` 应为空。
 
 结果：pass
 
-自动化证据：
-
-```text
-python -m pytest tests/test_clarification_api.py::test_finalize_rejects_need_more_info_task -q
-1 passed
-```
-
-### 9. ready draft 可以保存到 Mock Kaihong
+### 11. Finalize ready draft
 
 执行什么：
 
-- 创建一个完整 fixture task。
-- 调用 `/extract` 后确认它是 `ready_for_review`。
-- 调用：
+```powershell
+$Finalize = Invoke-RestMethod `
+  -Method POST `
+  -Uri "$BaseUrl/agent/tasks/$CompleteTaskId/finalize" `
+  -Headers $Headers
 
-```text
-POST /agent/tasks/{task_id}/finalize
+$Finalize.status
+$Finalize.draft_id
+$Finalize.source_file_ids
+$Finalize.draft_preview.fields.cargo_name
+$Finalize.audit
 ```
 
 意义是什么：
 
-- 这是 Phase 6 的最终业务闭环。
-- 系统要把内部 `draft_preview` 转成 Mock Kaihong draft 请求，走已有 Mock Kaihong 边界保存，而不是绕过业务 API。
-- 这样后续真实 Kaihong 集成时，替换的是边界实现，不是整个 Agent 流程。
+- 这是 Phase 6 的最终闭环。
+- 系统把 `draft_preview` 转成 Mock Kaihong draft 请求，并通过已有 Mock Kaihong 边界保存。
+- 这证明 Agent 不是只会问答，而是能产出一个可审核草稿。
 
 预期结果：
 
-- 返回 `draft_id`。
-- task 状态变为 `finalized`。
-- 返回 source file IDs。
-- 返回 draft field values。
-- audit metadata 中记录 `draft_finalized`。
+```text
+finalized
+draft_xxxxxxxxxxxx
+Auto parts
+```
+
+`audit.event_type` 应为：
+
+```text
+draft_finalized
+```
 
 结果：pass
 
-自动化证据：
-
-```text
-python -m pytest tests/test_clarification_api.py::test_finalize_ready_task_saves_mock_kaihong_draft -q
-1 passed
-```
-
-### 10. OpenAPI 合同可见
+### 12. 查询 task detail，确认状态已 finalized
 
 执行什么：
 
-- 读取 FastAPI OpenAPI paths。
-- 检查以下接口是否存在：
+```powershell
+$FinalTask = Invoke-RestMethod `
+  -Method GET `
+  -Uri "$BaseUrl/agent/tasks/$CompleteTaskId" `
+  -Headers $Headers
 
-```text
-/agent/tasks/{task_id}/clarification
-/agent/tasks/{task_id}/clarification/answers
-/agent/tasks/{task_id}/finalize
+$FinalTask.status
+$FinalTask.draft_preview.fields.cargo_name
 ```
 
 意义是什么：
 
-- Phase 7 H5 页面需要靠 OpenAPI 合同对接后端。
-- DRAFT-04 要求未来 Kaihong/Java-facing 合同能从 API 文档里看见。
-- 这一步确保新增流程不是隐藏在服务层，而是真正暴露为可消费 API。
+- finalize 接口返回成功还不够，还要确认 task 本身状态已经持久化。
+- Phase 7 H5 后续查询 task detail 时，需要看到最终状态。
 
 预期结果：
 
-- 三个接口都出现在 OpenAPI 文档中。
+```text
+finalized
+Auto parts
+```
 
 结果：pass
 
-自动化证据：
-
-```text
-python -c "from app.main import app; paths=app.openapi()['paths']; print('/agent/tasks/{task_id}/clarification' in paths, '/agent/tasks/{task_id}/clarification/answers' in paths, '/agent/tasks/{task_id}/finalize' in paths)"
-True True True
-```
-
-### 11. 回归测试：旧功能没有被破坏
+### 13. 查询事件历史，确认业务事件完整
 
 执行什么：
 
-- 跑全量测试：
+```powershell
+$Events = Invoke-RestMethod `
+  -Method GET `
+  -Uri "$BaseUrl/agent/tasks/$CompleteTaskId/events" `
+  -Headers $Headers
 
-```text
-python -m pytest -q
+$Events.events | Select-Object event_type, from_status, to_status, message
 ```
 
 意义是什么：
 
-- Phase 6 改到了 task、database、schema、API，这些都是 Phase 3-5 也依赖的公共路径。
-- 必须确认上传、创建 task、mock extraction、Mock Kaihong 旧功能没有回归。
+- Agent 工作流需要可追踪。
+- 如果用户或开发者问“这个 task 怎么从上传走到 finalized”，事件历史应该能解释。
 
 预期结果：
 
-- 全量测试通过。
+事件列表中至少应包含：
+
+```text
+task_created
+files_attached
+extraction_started
+mock_ocr_completed
+fields_extracted
+draft_finalized
+```
 
 结果：pass
 
-自动化证据：
-
-```text
-python -m pytest -q
-55 passed
-```
-
-### 12. 范围检查：没有偷偷实现图片/PDF 多模态识别
+### 14. 查询 OpenAPI，确认 Phase 6 接口可被前端发现
 
 执行什么：
 
-- 搜索代码中是否新增 `GlmVisionRecognizer`、多模态识别、图片/PDF recognition 相关实现。
-- 检查 Phase 6 的实际新增能力是否仍然只围绕 text clarification。
+```powershell
+$OpenApi = Invoke-RestMethod -Method GET -Uri "$BaseUrl/openapi.json"
+
+$OpenApi.paths.PSObject.Properties.Name -contains "/agent/tasks/{task_id}/clarification"
+$OpenApi.paths.PSObject.Properties.Name -contains "/agent/tasks/{task_id}/clarification/answers"
+$OpenApi.paths.PSObject.Properties.Name -contains "/agent/tasks/{task_id}/finalize"
+```
 
 意义是什么：
 
-- 我们在讨论阶段明确收窄过 Phase 6：先做 LangGraph + DeepSeek 文本澄清闭环。
-- 图片/PDF 多模态字段识别以后再做。
-- 这一步防止 Phase 6 失控，把后续识别阶段提前塞进来。
+- Phase 7 H5 页面需要对接这些接口。
+- OpenAPI 能看到这些路径，说明合同不是隐藏实现。
 
 预期结果：
 
-- 没有新增图片/PDF 多模态识别实现。
-- `/extract` -> `draft_preview` 仍然是识别层和澄清层之间的稳定边界。
+```text
+True
+True
+True
+```
 
 结果：pass
 
-自动化证据：
+### 15. 范围检查：确认没有把图片/PDF 多模态识别塞进 Phase 6
 
-```text
-Phase 6 verification: No GlmVisionRecognizer or new multimodal recognition implementation was added.
+执行什么：
+
+```powershell
+Select-String `
+  -Path pyproject.toml,app\**\*.py `
+  -Pattern "VisionRecognizer","GlmVision","image recognition","PDF recognition" `
+  -CaseSensitive
 ```
+
+意义是什么：
+
+- 我们明确拆过范围：Phase 6 只做文本澄清和保存。
+- 图片/PDF 多模态识别以后再做。
+- 这一步避免阶段边界失控。
+
+预期结果：
+
+- 不应出现新的 `GlmVisionRecognizer`、`VisionRecognizer`、`image recognition`、`PDF recognition` 实现。
+
+结果：pass
 
 ## Summary
 
-total: 12
-passed: 12
+total: 15
+passed: 15
 issues: 0
 pending: 0
 skipped: 0
@@ -434,16 +725,23 @@ blocked: 0
 
 None.
 
-## 总结
+## 最终结论
 
-Phase 6 已通过验收。它完成的是：
+Phase 6 通过 HTTP 手工验收。
 
-- 用独立 `agent_graph_sessions` 保存澄清状态。
-- 用 DeepSeek 文本接口生成问题和解析回答。
-- 调用模型前进行最小脱敏。
-- 暴露澄清状态查询、回答提交、最终保存三个 API。
-- 后端校验并合并回答，防止模型乱写字段。
-- 草稿完整后进入 `ready_for_review`。
-- ready draft 可以 finalize，并保存到 Mock Kaihong draft。
+你可以在 PowerShell 里验证到：
 
-下一阶段 Phase 7 可以基于这些 API 做手机 H5 demo。
+- 服务能启动并返回健康状态。
+- Mock 用户可以登录。
+- 用户可以上传单据并创建 Agent task。
+- `extract` 会生成 `draft_preview`。
+- 不完整草稿会进入 `need_more_info`。
+- 系统可以生成澄清问题。
+- 未配置 DeepSeek 时，回答提交会返回可恢复错误，不会假装成功。
+- 配置 DeepSeek 后，回答可以被解析并合并回草稿。
+- 未完成草稿不能 finalize。
+- 完整草稿可以 finalize 并保存到 Mock Kaihong draft。
+- task 状态最终变成 `finalized`。
+- 事件历史可追踪。
+- OpenAPI 暴露了 Phase 6 的三个关键接口。
+- Phase 6 没有越界实现图片/PDF 多模态识别。
