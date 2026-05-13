@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.schemas.clarification import ClarificationQuestion, ParsedClarificationAnswer
 from app.services import clarification
+from app.services.deepseek_client import DeepSeekError
 
 
 client = TestClient(app)
@@ -29,6 +30,14 @@ class FakeClarificationModel:
             resolved_conflicts=self.resolved_conflicts,
             confidence=0.95,
         )
+
+
+class FailingQuestionModel:
+    def generate_question(self, redacted_context):
+        raise DeepSeekError("DeepSeek request failed: model unavailable")
+
+    def parse_answer(self, redacted_context, answer_text):
+        return ParsedClarificationAnswer()
 
 
 def login_headers(username: str = "yw001") -> dict[str, str]:
@@ -94,6 +103,18 @@ def test_get_clarification_returns_current_question():
     assert body["current_question"]["question_id"].startswith("question_")
     assert body["current_question"]["requested_fields"]
     assert "shipper_phone" in body["missing_fields"]
+
+
+def test_get_clarification_returns_recoverable_error_when_model_question_fails():
+    headers = login_headers()
+    task_id, _file_id, extracted = create_and_extract("incomplete-receipt.jpg", headers)
+    assert extracted["status"] == "need_more_info"
+    clarification.set_model_override_for_tests(FailingQuestionModel())
+
+    response = client.get(f"/agent/tasks/{task_id}/clarification", headers=headers)
+
+    assert response.status_code == 502
+    assert "DeepSeek request failed" in response.json()["detail"]
 
 
 def test_submit_answer_merges_fields_and_reaches_ready_for_review():

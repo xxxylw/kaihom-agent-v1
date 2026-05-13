@@ -342,6 +342,12 @@ Please confirm ...
 
 并且 `requested_fields` 里应该包含缺失字段。
 
+如果这里返回 502：
+
+- 含义是服务已经进入 DeepSeek 问题生成路径，但真实 DeepSeek 调用失败，例如 API key、模型名、网络或额度有问题。
+- 这是可恢复配置/外部服务错误，不应再表现为 500 Internal Server Error。
+- 你可以临时清掉 `$env:KAIHOM_DEEPSEEK_API_KEY` 后重启服务，验证本地 fallback 问题生成；或者修正 DeepSeek 配置后重试。
+
 结果：pass
 
 ### 7A. 如果没有 DeepSeek Key：验证回答提交返回可恢复错误

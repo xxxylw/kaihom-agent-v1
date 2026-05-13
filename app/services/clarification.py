@@ -83,7 +83,10 @@ def get_or_create_clarification(
         privacy_map=privacy_map,
     )
     model = _get_model(required=False)
-    graph_state = run_question_graph(graph_state, model)
+    try:
+        graph_state = run_question_graph(graph_state, model)
+    except DeepSeekError as exc:
+        raise ClarificationError(str(exc), status.HTTP_502_BAD_GATEWAY) from exc
 
     graph_session.state_json = graph_state.model_dump_json()
     graph_session.current_question_json = (
@@ -179,7 +182,10 @@ def submit_clarification_answer(
             answer_history=answer_history,
             redacted_context=build_redacted_context(updated_preview)[0],
         )
-        next_state = run_question_graph(next_state, _get_model(required=False))
+        try:
+            next_state = run_question_graph(next_state, _get_model(required=False))
+        except DeepSeekError as exc:
+            raise ClarificationError(str(exc), status.HTTP_502_BAD_GATEWAY) from exc
         next_question = next_state.current_question
         graph_session.current_question_json = next_question.model_dump_json() if next_question else None
         graph_session.state_json = next_state.model_dump_json()
