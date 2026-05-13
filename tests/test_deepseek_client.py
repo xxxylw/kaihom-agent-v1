@@ -103,6 +103,30 @@ def test_invalid_json_retries_once_then_succeeds():
     assert len(fake.calls) == 2
 
 
+def test_parse_answer_accepts_resolved_conflict_objects_from_model():
+    fake = FakeHTTPClient(
+        [
+            response_with(
+                '{"fields":{"consignee_address":"Ningbo Port"},"resolved_conflicts":[{"field":"destination","reason":"Resolved after user clarification."}],"confidence":0.9}'
+            )
+        ]
+    )
+    client = DeepSeekClient(settings=settings(), http_client=fake)
+
+    parsed = client.parse_answer({}, "address is Ningbo Port")
+
+    assert parsed.fields["consignee_address"] == "Ningbo Port"
+    assert parsed.resolved_conflicts == ["destination"]
+
+
+def test_parse_answer_validation_failure_is_recoverable_error():
+    fake = FakeHTTPClient([response_with('{"fields":[],"resolved_conflicts":[],"confidence":0.9}')])
+    client = DeepSeekClient(settings=settings(deepseek_max_retries=0), http_client=fake)
+
+    with pytest.raises(DeepSeekError, match="answer schema"):
+        client.parse_answer({}, "anything")
+
+
 def test_final_invalid_json_failure_is_recoverable_error():
     fake = FakeHTTPClient([response_with("bad"), response_with("still bad")])
     client = DeepSeekClient(settings=settings(), http_client=fake)

@@ -62,7 +62,7 @@ class DeepSeekClient:
         }
         data = self._chat_json(payload)
         try:
-            return ParsedClarificationAnswer.model_validate(data)
+            return ParsedClarificationAnswer.model_validate(_normalize_answer_payload(data))
         except ValidationError as exc:
             raise DeepSeekError(f"DeepSeek answer schema validation failed: {exc}") from exc
 
@@ -129,3 +129,20 @@ def _normalize_question_payload(data: dict[str, Any]) -> dict[str, Any]:
             for item in requested_fields
         ]
     return normalized
+
+
+def _normalize_answer_payload(data: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(data)
+    resolved_conflicts = normalized.get("resolved_conflicts")
+    if isinstance(resolved_conflicts, list):
+        normalized["resolved_conflicts"] = [
+            _normalize_resolved_conflict(item)
+            for item in resolved_conflicts
+        ]
+    return normalized
+
+
+def _normalize_resolved_conflict(item: Any) -> Any:
+    if not isinstance(item, dict):
+        return item
+    return item.get("field_name") or item.get("field") or item.get("id") or item
