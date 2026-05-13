@@ -55,6 +55,32 @@ def test_generate_question_uses_configured_deepseek_endpoint():
     assert fake.calls[0]["json"]["model"] == "deepseek-test"
 
 
+def test_generate_question_accepts_requested_field_names_from_model():
+    fake = FakeHTTPClient(
+        [
+            response_with(
+                '{"question_id":"q1","text":"Please provide missing details.","requested_fields":["shipper_phone","consignee_phone"],"conflicts":[],"round_number":1}'
+            )
+        ]
+    )
+    client = DeepSeekClient(settings=settings(), http_client=fake)
+
+    question = client.generate_question({"missing_fields": ["shipper_phone", "consignee_phone"]})
+
+    assert [field.field_name for field in question.requested_fields] == [
+        "shipper_phone",
+        "consignee_phone",
+    ]
+
+
+def test_generate_question_validation_failure_is_recoverable_error():
+    fake = FakeHTTPClient([response_with('{"question_id":"q1","text":123,"requested_fields":[]}')])
+    client = DeepSeekClient(settings=settings(deepseek_max_retries=0), http_client=fake)
+
+    with pytest.raises(DeepSeekError, match="question schema"):
+        client.generate_question({})
+
+
 def test_missing_api_key_is_recoverable_error():
     client = DeepSeekClient(settings=settings(deepseek_api_key=None), http_client=FakeHTTPClient([]))
 

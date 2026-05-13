@@ -2,6 +2,7 @@ import json
 from typing import Any, Protocol
 
 import httpx
+from pydantic import ValidationError
 
 from app.core.config import Settings, get_settings
 from app.schemas.clarification import ClarificationQuestion, ParsedClarificationAnswer
@@ -41,7 +42,10 @@ class DeepSeekClient:
             "context": redacted_context,
         }
         data = self._chat_json(payload)
-        return ClarificationQuestion.model_validate(data)
+        try:
+            return ClarificationQuestion.model_validate(_normalize_question_payload(data))
+        except ValidationError as exc:
+            raise DeepSeekError(f"DeepSeek question schema validation failed: {exc}") from exc
 
     def parse_answer(
         self,
@@ -57,7 +61,10 @@ class DeepSeekClient:
             "answer_text": answer_text,
         }
         data = self._chat_json(payload)
-        return ParsedClarificationAnswer.model_validate(data)
+        try:
+            return ParsedClarificationAnswer.model_validate(data)
+        except ValidationError as exc:
+            raise DeepSeekError(f"DeepSeek answer schema validation failed: {exc}") from exc
 
     def _chat_json(self, payload: dict[str, Any]) -> dict[str, Any]:
         if not self.settings.deepseek_api_key:
@@ -111,3 +118,14 @@ def _extract_json_content(data: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(parsed, dict):
         raise DeepSeekError("DeepSeek JSON content must be an object")
     return parsed
+
+
+def _normalize_question_payload(data: dict[str, Any]) -> dict[str, Any]:
+    normalized = dict(data)
+    requested_fields = normalized.get("requested_fields")
+    if isinstance(requested_fields, list):
+        normalized["requested_fields"] = [
+            {"field_name": item} if isinstance(item, str) else item
+            for item in requested_fields
+        ]
+    return normalized
