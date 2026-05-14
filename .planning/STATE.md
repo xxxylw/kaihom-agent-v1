@@ -73,6 +73,12 @@ $gsd-discuss-phase 7
 | 2026-05-13 | Phase 6 planned as LangGraph + DeepSeek clarification/finalization | The plan narrows Phase 6 to text-only clarification and Mock Kaihong draft save, deferring image/PDF multimodal recognition to a later phase. |
 | 2026-05-13 | Phase 6 implemented clarification and draft finalization | The backend now supports graph sessions, redacted DeepSeek text flow, protected clarification APIs, answer merge, ready_for_review transition, and Mock Kaihong draft finalization. |
 
+## Accumulated Context
+
+### Pending Todos
+
+- 2026-05-14: Route conflicts into clarification. Phase 6 should route draft previews with `conflicts` into `need_more_info`, not only drafts with missing fields.
+
 ## Open Questions
 
 - What exact fields will Kaihong Wing require when real API docs become available?
